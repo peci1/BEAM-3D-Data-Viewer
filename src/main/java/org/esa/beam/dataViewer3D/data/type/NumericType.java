@@ -3,7 +3,6 @@
  */
 package org.esa.beam.dataViewer3D.data.type;
 
-
 /**
  * A number that can have a defined "external" precision if it isn't integer type.
  * 
@@ -13,23 +12,14 @@ package org.esa.beam.dataViewer3D.data.type;
 public abstract class NumericType<N extends Number>
 {
     /** The represented number. */
-    private final N       number;
-    /**
-     * The precision of the number (only has effect for non-integral types). Defines the number of digits after the
-     * decimal point to take into account.
-     */
-    private final Integer precision;
+    private final N number;
 
     /**
      * @param number The represented number.
-     * @param precision The precision of the number (only has effect for non-integral types). Defines the number of
-     *            digits after the
-     *            decimal point to take into account.
      */
-    public NumericType(N number, Integer precision)
+    protected NumericType(N number)
     {
         this.number = number;
-        this.precision = precision;
     }
 
     /**
@@ -40,18 +30,6 @@ public abstract class NumericType<N extends Number>
     public N getNumber()
     {
         return number;
-    }
-
-    /**
-     * The precision of the number (only has effect for non-integral types). Defines the number of digits after the
-     * decimal point to take into account.
-     * 
-     * @return The precision of the number (only has effect for non-integral types). Defines the number of digits after
-     *         the decimal point to take into account.
-     */
-    public Integer getPrecision()
-    {
-        return precision;
     }
 
     @Override
@@ -76,11 +54,7 @@ public abstract class NumericType<N extends Number>
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append(number);
-        if (precision != null)
-            builder.append(", precision=").append(precision);
-        return builder.toString();
+        return number.toString();
     }
 
 }

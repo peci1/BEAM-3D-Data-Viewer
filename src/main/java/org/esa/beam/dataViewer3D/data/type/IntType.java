@@ -16,7 +16,7 @@ public class IntType extends NumericType<Integer>
      */
     public IntType(Integer number)
     {
-        super(number, null);
+        super(number);
     }
 
 }

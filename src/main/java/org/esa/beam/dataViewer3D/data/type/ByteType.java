@@ -16,7 +16,7 @@ public class ByteType extends NumericType<Byte>
      */
     public ByteType(Byte number)
     {
-        super(number, null);
+        super(number);
     }
 
 }

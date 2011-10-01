@@ -16,7 +16,7 @@ public class LongType extends NumericType<Long>
      */
     public LongType(Long number)
     {
-        super(number, null);
+        super(number);
     }
 
 }

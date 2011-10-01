@@ -16,7 +16,7 @@ public class ShortType extends NumericType<Short>
      */
     public ShortType(Short number)
     {
-        super(number, null);
+        super(number);
     }
 
 }
