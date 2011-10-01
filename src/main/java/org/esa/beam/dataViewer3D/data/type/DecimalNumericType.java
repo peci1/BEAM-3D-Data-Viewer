@@ -13,7 +13,8 @@ public abstract class DecimalNumericType<N extends Number> extends NumericType<N
 {
 
     /**
-     * The precision of the number. Defines the number of digits after the decimal point to take into account.
+     * The precision of the number. Defines the number of digits after the decimal point to take into account. The first
+     * cropped digit is used for rounding issues.
      * <p>
      * Negative values mean that you want to do the "rounding" to the left from the decimal point, eg. precision -2 will
      * treat 1234 as 1200.
@@ -28,9 +29,10 @@ public abstract class DecimalNumericType<N extends Number> extends NumericType<N
     /**
      * @param number The represented number.
      * @param precision The precision of the number. Defines the number of digits after the decimal point to take into
-     *            account. Negative values mean that you want to do the "rounding" to the left from the decimal point,
-     *            eg. precision -2 will treat 1234 as 1200. <code>null</code> values mean no explicit rounding is done
-     *            and the precision is bounded only by the data type.
+     *            account. The first cropped digit is used for rounding issues. Negative values mean that you want to do
+     *            the "rounding" to the left from the decimal point, eg. precision -2 will treat 1234 as 1200.
+     *            <code>null</code> values mean no explicit rounding is done and the precision is bounded only by the
+     *            data type.
      */
     protected DecimalNumericType(N number, Integer precision)
     {
@@ -47,7 +49,8 @@ public abstract class DecimalNumericType<N extends Number> extends NumericType<N
     protected abstract Long computeRoundedValue();
 
     /**
-     * The precision of the number. Defines the number of digits after the decimal point to take into account.
+     * The precision of the number. Defines the number of digits after the decimal point to take into account. The first
+     * cropped digit is used for rounding issues.
      * <p>
      * Negative values mean that you want to do the "rounding" to the left from the decimal point, eg. precision -2 will
      * treat 1234 as 1200.
@@ -64,7 +67,10 @@ public abstract class DecimalNumericType<N extends Number> extends NumericType<N
     @Override
     public int hashCode()
     {
-        return roundedValue.hashCode();
+        if (roundedValue != null)
+            return roundedValue.hashCode();
+        else
+            return getNumber().hashCode();
     }
 
     @Override
@@ -77,7 +83,10 @@ public abstract class DecimalNumericType<N extends Number> extends NumericType<N
         if (getClass() != obj.getClass())
             return false;
         DecimalNumericType<?> other = (DecimalNumericType<?>) obj;
-        return roundedValue.equals(other.roundedValue);
+        if (roundedValue != null)
+            return roundedValue.equals(other.roundedValue);
+        else
+            return getNumber().equals(other.getNumber());
     }
 
     @Override

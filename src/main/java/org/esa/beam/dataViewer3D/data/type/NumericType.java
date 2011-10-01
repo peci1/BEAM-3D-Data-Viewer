@@ -32,6 +32,12 @@ public abstract class NumericType<N extends Number>
         return number;
     }
 
+    /**
+     * <b>For types smaller than or equal to Integer (with the range) it is needed that all the possible values are
+     * disjunct.</b>
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public int hashCode()
     {
