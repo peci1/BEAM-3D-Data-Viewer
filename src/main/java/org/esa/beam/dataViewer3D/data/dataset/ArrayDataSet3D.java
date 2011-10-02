@@ -51,6 +51,29 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
             int minXIndex, int minYIndex, int minZIndex, int maxXIndex, int maxYIndex, int maxZIndex)
     {
         super(histogram);
+
+        if (histogram.length != data.length)
+            throw new IllegalArgumentException(getClass()
+                    + ": The given histogram and data arrays must have equal lengths.");
+
+        if (data.length <= 0)
+            throw new IllegalArgumentException(getClass() + ": Cannot create data set of zero length.");
+
+        if (minXIndex < 0 || minYIndex < 0 || minZIndex < 0 || maxXIndex < 0 || maxYIndex < 0 || maxZIndex < 0) {
+            throw new IllegalArgumentException(getClass() + "Array index of min/max is < 0.");
+        }
+        if (minXIndex >= data.length || minYIndex >= data.length || minZIndex >= data.length
+                || maxXIndex >= data.length || maxYIndex >= data.length || maxZIndex >= data.length) {
+            throw new IllegalArgumentException(getClass() + "Array index of min/max is >= data.length .");
+        }
+
+        if (data[minXIndex].getX().getNumber().doubleValue() > data[maxXIndex].getX().getNumber().doubleValue()
+                || data[minYIndex].getY().getNumber().doubleValue() > data[maxYIndex].getY().getNumber().doubleValue()
+                || data[minZIndex].getZ().getNumber().doubleValue() > data[maxZIndex].getZ().getNumber().doubleValue()) {
+            throw new IllegalArgumentException(getClass()
+                    + ": The given minimum value is greater than the given maximum.");
+        }
+
         this.data = data;
 
         this.minXIndex = minXIndex;
