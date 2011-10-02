@@ -20,10 +20,17 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
     protected final int     size;
     protected final N       min, max;
 
-    public RandomDataSource(int size, N min, N max)
+    public RandomDataSource(int size, N min, N max) throws IllegalArgumentException
     {
+        if (size <= 0)
+            throw new IllegalArgumentException(getClass() + ": Cannot set non-positive size.");
+
+        if (min.doubleValue() > max.doubleValue())
+            throw new IllegalArgumentException(getClass() + ": Cannot set minimum bigger than maximum.");
+
         data = new ArrayList<N>(size);
         this.size = size;
+
         this.min = min;
         this.max = max;
     }
@@ -37,13 +44,13 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
             @Override
             public boolean hasNext()
             {
-                return i < size - 1;
+                return i < size;
             }
 
             @Override
             public N next()
             {
-                if (data.size() - 1 < i || data.get(i) == null)
+                if (data.size() - 1 <= i || data.get(i) == null)
                     data.add(getRandomValue());
                 return data.get(i++);
             }
