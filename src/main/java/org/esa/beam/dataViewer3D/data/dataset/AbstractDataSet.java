@@ -159,6 +159,15 @@ public abstract class AbstractDataSet implements DataSet
          */
         protected Builder(Long maxPoints, Long inputSize)
         {
+            if (maxPoints != null && maxPoints <= 0)
+                throw new IllegalArgumentException(
+                        "The maximum number of points must be either null or a positive number, but " + maxPoints
+                                + " given.");
+
+            if (inputSize != null && inputSize <= 0)
+                throw new IllegalArgumentException("The inputSize must be either null or a positive number, but "
+                        + inputSize + " given.");
+
             this.maxPoints = maxPoints;
             this.inputSize = inputSize;
 

@@ -148,11 +148,12 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
     {
         /**
          * @param maxPoints The maximum number of data points in the resulting set.
-         * @param expectedCount The expected number of data points (<code>null</code> if the count cannot be estimated).
+         * @param inputSize The number of data points this builder will get as input (<code>null</code> if the count
+         *            cannot be determined).
          */
-        private Builder4D(Long maxPoints, Long expectedCount)
+        private Builder4D(Long maxPoints, Long inputSize)
         {
-            super(maxPoints, expectedCount);
+            super(maxPoints, inputSize);
         }
 
         /**
