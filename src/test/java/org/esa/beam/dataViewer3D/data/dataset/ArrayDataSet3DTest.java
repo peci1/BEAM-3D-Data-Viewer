@@ -3,11 +3,14 @@
  */
 package org.esa.beam.dataViewer3D.data.dataset;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.matchers.JUnitMatchers.either;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -300,11 +303,45 @@ public class ArrayDataSet3DTest
         assertEquals("Wrong histogram count reported", (Long) 2L, histIt.next());
         assertEquals("Wrong histogram count reported", (Long) 2L, histIt.next());
 
-        // TODO
-        // TODO
-        // TODO more test cases
-        // TODO
-        // TODO
+        dataSet = ArrayDataSet.createFromDataSources(5L, getTestDataSourceX(10), getTestDataSourceY(10),
+                getTestDataSourceZ(10));
+        assertTrue("Wrong data set size reported", 5 >= dataSet.size());
+        assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
+        assertTrue("Wrong dataset minimum returned", Integer.MIN_VALUE <= dataSet.getMinY());
+        assertTrue("Wrong dataset minimum returned", -10d <= dataSet.getMinZ());
+        assertTrue("Wrong dataset maximum returned", Byte.MAX_VALUE >= dataSet.getMaxX());
+        assertTrue("Wrong dataset maximum returned", Integer.MAX_VALUE >= dataSet.getMaxY());
+        assertTrue("Wrong dataset maximum returned", Double.MAX_VALUE >= dataSet.getMaxZ());
+        histIt = dataSet.histogramIterator();
+        for (int i = 0; i < 5; i++)
+            assertEquals("Wrong histogram count reported", (Long) 1L, histIt.next());
+
+        dataSet = ArrayDataSet.createFromDataSources(50000L, getTestDataSourceX(100000), getTestDataSourceY(100000),
+                getTestDataSourceZ(100000));
+        assertTrue("Wrong data set size reported", 50000 >= dataSet.size());
+        assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
+        assertTrue("Wrong dataset minimum returned", Integer.MIN_VALUE <= dataSet.getMinY());
+        assertTrue("Wrong dataset minimum returned", -10d <= dataSet.getMinZ());
+        assertTrue("Wrong dataset maximum returned", Byte.MAX_VALUE >= dataSet.getMaxX());
+        assertTrue("Wrong dataset maximum returned", Integer.MAX_VALUE >= dataSet.getMaxY());
+        assertTrue("Wrong dataset maximum returned", Double.MAX_VALUE >= dataSet.getMaxZ());
+        histIt = dataSet.histogramIterator();
+        while (histIt.hasNext())
+            assertThat("Wrong histogram count reported", histIt.next(), either(is(1L)).or(is(2L)));
+
+        //the test data have 2 equal points for every 12 points
+        dataSet = ArrayDataSet.createFromDataSources(null, getTestDataSourceX(120000), getTestDataSourceY(120000),
+                getTestDataSourceZ(120000));
+        assertEquals("Wrong data set size reported", 100000, dataSet.size());
+        assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
+        assertTrue("Wrong dataset minimum returned", Integer.MIN_VALUE <= dataSet.getMinY());
+        assertTrue("Wrong dataset minimum returned", -10d <= dataSet.getMinZ());
+        assertTrue("Wrong dataset maximum returned", Byte.MAX_VALUE >= dataSet.getMaxX());
+        assertTrue("Wrong dataset maximum returned", Integer.MAX_VALUE >= dataSet.getMaxY());
+        assertTrue("Wrong dataset maximum returned", Double.MAX_VALUE >= dataSet.getMaxZ());
+        histIt = dataSet.histogramIterator();
+        while (histIt.hasNext())
+            assertThat("Wrong histogram count reported", histIt.next(), either(is(1L)).or(is(2L)));
     }
 
     private DataSource<Byte> getTestDataSourceX(final int size)
@@ -507,59 +544,77 @@ public class ArrayDataSet3DTest
 
     private DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>[] getTestData(int size)
     {
-        if (size > 12 || size < 0)
-            throw new IllegalArgumentException();
-
         @SuppressWarnings("unchecked")
         DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>[] data = (DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>[]) new DataPoint3D<?, ?, ?>[size];
-        if (size == 0)
-            return data;
-        data[0] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 5), new IntType(6), new DoubleType(6.5, null));
-        if (size == 1)
-            return data;
-        data[1] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 0), new IntType(0), new DoubleType(0d, null));
-        if (size == 2)
-            return data;
-        data[2] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                Byte.MIN_VALUE), new IntType(Integer.MIN_VALUE), new DoubleType(Double.MIN_VALUE, null));
-        if (size == 3)
-            return data;
-        data[3] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                Byte.MAX_VALUE), new IntType(Integer.MAX_VALUE), new DoubleType(Double.MAX_VALUE, null));
-        if (size == 4)
-            return data;
-        data[4] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                Byte.MIN_VALUE), new IntType(Integer.MAX_VALUE), new DoubleType(Double.NaN, null));
-        if (size == 5)
-            return data;
-        data[5] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) -5), new IntType(-6), new DoubleType(-6.5, null));
-        if (size == 6)
-            return data;
-        data[6] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 1), new IntType(10000000), new DoubleType(Double.MIN_NORMAL, null));
-        if (size == 7)
-            return data;
-        data[7] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 2), new IntType(3), new DoubleType(3.99999999999, 20));
-        if (size == 8)
-            return data;
-        data[8] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 2), new IntType(3), new DoubleType(3.99999999999, 1));
-        if (size == 9)
-            return data;
-        data[9] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 1), new IntType(4), new DoubleType(-10d, null));
-        if (size == 10)
-            return data;
-        data[10] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 5), new IntType(6), new DoubleType(6.5, null));
-        if (size == 11)
-            return data;
-        data[11] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(new ByteType(
-                (byte) 0), new IntType(0), new DoubleType(0d, null));
+        for (int i = 0; i < size; i++) {
+            switch ((i + 1) % 12) {
+                case 0:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (0 + i / 12)), new IntType(0 + i / 12), new DoubleType(0d + i / 12,
+                                    null));
+                    break;
+
+                case 1:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (5 + i / 12)), new IntType(6 + i / 12), new DoubleType(6.5 + i / 12,
+                                    null));
+                    break;
+
+                case 2:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (0 + i / 12)), new IntType(0 + i / 12), new DoubleType(0d + i / 12,
+                                    null));
+                    break;
+                case 3:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (Byte.MIN_VALUE + i / 12)), new IntType(Integer.MIN_VALUE + i / 12),
+                            new DoubleType(Double.MIN_VALUE + i / 12, null));
+                    break;
+                case 4:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (Byte.MAX_VALUE - i / 12)), new IntType(Integer.MAX_VALUE - i / 12),
+                            new DoubleType(Double.MAX_VALUE - i / 12, null));
+                    break;
+                case 5:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (Byte.MIN_VALUE + i / 12)), new IntType(Integer.MAX_VALUE - i / 12),
+                            new DoubleType(Double.NaN, null));
+                    break;
+                case 6:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (-5 + i / 12)), new IntType(-6 + i / 12), new DoubleType(-6.5 + i / 12,
+                                    null));
+                    break;
+                case 7:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (1 + i / 12)), new IntType(10000000 + i / 12), new DoubleType(
+                                    Double.MIN_NORMAL + i / 12, null));
+                    break;
+                case 8:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (2 + i / 12)), new IntType(3 + i / 12), new DoubleType(
+                                    3.99999999999 + i / 12, 20));
+                    break;
+                case 9:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (2 + i / 12)), new IntType(3 + i / 12), new DoubleType(
+                                    3.99999999999 + i / 12, 1));
+                    break;
+                case 10:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (1 + i / 12)), new IntType(4 + i / 12), new DoubleType(-10d + i / 12,
+                                    null));
+                    break;
+                case 11:
+                    data[i] = new SimpleDataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>(
+                            new ByteType((byte) (5 + i / 12)), new IntType(6 + i / 12), new DoubleType(6.5 + i / 12,
+                                    null));
+                    break;
+
+                default:
+                    break;
+            }
+        }
         return data;
     }
 
