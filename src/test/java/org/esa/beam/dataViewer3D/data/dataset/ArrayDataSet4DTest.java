@@ -69,7 +69,7 @@ public class ArrayDataSet4DTest
 
         try {
             new ArrayDataSet4D<Byte, Integer, Double, Float>(getTestData(1), getHistogram(2), 1, 1, 1, 1, 0, 0, 0, 0);
-            fail("Allowed to create data set with histogram shorter than test data");
+            fail("Allowed to create data set with histogram longer than test data");
         } catch (IllegalArgumentException e) {}
 
         try {

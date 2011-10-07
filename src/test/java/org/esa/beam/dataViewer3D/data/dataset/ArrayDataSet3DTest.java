@@ -65,7 +65,7 @@ public class ArrayDataSet3DTest
 
         try {
             new ArrayDataSet3D<Byte, Integer, Double>(getTestData(1), getHistogram(2), 1, 1, 1, 0, 0, 0);
-            fail("Allowed to create data set with histogram shorter than test data");
+            fail("Allowed to create data set with histogram longer than test data");
         } catch (IllegalArgumentException e) {}
 
         try {
@@ -329,7 +329,7 @@ public class ArrayDataSet3DTest
         while (histIt.hasNext())
             assertThat("Wrong histogram count reported", histIt.next(), either(is(1L)).or(is(2L)));
 
-        //the test data have 2 equal points for every 12 points
+        // the test data have 2 equal points for every 12 points
         dataSet = ArrayDataSet.createFromDataSources(null, getTestDataSourceX(120000), getTestDataSourceY(120000),
                 getTestDataSourceZ(120000));
         assertEquals("Wrong data set size reported", 100000, dataSet.size());
