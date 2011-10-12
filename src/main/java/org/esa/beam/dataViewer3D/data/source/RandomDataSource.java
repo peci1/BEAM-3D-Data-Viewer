@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class RandomDataSource<N extends Number> extends AbstractDataSource<N> implements DataSource<N>
 {
 
-    protected final List<N> data; // TODO change to a list that can have more than MAXINT items
+    protected final List<N> data;
     protected final int     size;
     protected final N       min, max;
 
@@ -66,7 +66,7 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
     protected abstract N getRandomValue();
 
     @Override
-    public long size()
+    public int size()
     {
         return size;
     }

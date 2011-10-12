@@ -24,7 +24,7 @@ public abstract class BandDataSource<N extends Number> implements DataSource<N>
     }
 
     @Override
-    public long size()
+    public int size()
     {
         return 0;
         // TODO Auto-generated method stub

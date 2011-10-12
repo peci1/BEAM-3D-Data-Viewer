@@ -19,7 +19,7 @@ public interface DataSet extends Iterable<DataPoint>
      * 
      * @return The number of data points in this set.
      */
-    long size();
+    int size();
 
     /**
      * Return the iterator that iterates through the histogram entries (counts of data points with the same value) in
@@ -28,5 +28,5 @@ public interface DataSet extends Iterable<DataPoint>
      * @return The iterator that iterates through the histogram entries (counts of data points with the same value) in
      *         the same order as iterator() iterates over data points.
      */
-    Iterator<Long> histogramIterator();
+    Iterator<Integer> histogramIterator();
 }

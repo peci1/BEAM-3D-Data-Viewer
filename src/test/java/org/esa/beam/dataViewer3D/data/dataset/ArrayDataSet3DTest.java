@@ -38,7 +38,7 @@ public class ArrayDataSet3DTest
 
     /**
      * Test method for
-     * {@link org.esa.beam.dataViewer3D.data.dataset.ArrayDataSet3D#ArrayDataSet3D(org.esa.beam.dataViewer3D.data.point.DataPoint3D[], Long[], int, int, int, int, int, int)}
+     * {@link org.esa.beam.dataViewer3D.data.dataset.ArrayDataSet3D#ArrayDataSet3D(org.esa.beam.dataViewer3D.data.point.DataPoint3D[], Integer[], int, int, int, int, int, int)}
      * .
      */
     @Test
@@ -174,9 +174,9 @@ public class ArrayDataSet3DTest
         DataSet3D<Byte, Integer, Double> dataSet = new ArrayDataSet3D<Byte, Integer, Double>(getTestData(10),
                 getHistogram(10), 2, 2, 9, 3, 3, 3);
         Iterator<DataPoint> it = dataSet.iterator();
-        for (Iterator<Long> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
+        for (Iterator<Integer> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
             assertTrue("Histogram iterator returns more elements than the normal one", it.hasNext());
-            Long value = histIt.next();
+            Integer value = histIt.next();
             it.next();
             assertNotNull("Histogram iterator returned null", value);
             assertTrue("Histogram iterator returned non-positive value", value > 0L);
@@ -185,9 +185,9 @@ public class ArrayDataSet3DTest
 
         dataSet = new ArrayDataSet3D<Byte, Integer, Double>(getTestData(2), getHistogram(2), 1, 1, 1, 0, 0, 0);
         it = dataSet.iterator();
-        for (Iterator<Long> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
+        for (Iterator<Integer> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
             assertTrue("Histogram iterator returns more elements than the normal one", it.hasNext());
-            Long value = histIt.next();
+            Integer value = histIt.next();
             it.next();
             assertNotNull("Histogram iterator returned null", value);
             assertTrue("Histogram iterator returned non-positive value", value > 0L);
@@ -199,32 +199,32 @@ public class ArrayDataSet3DTest
     public void testGetBuilder()
     {
         assertNotNull(ArrayDataSet3D.getBuilder(null));
-        assertNotNull(ArrayDataSet3D.getBuilder(1L));
-        assertNotNull(ArrayDataSet3D.getBuilder(1000000L));
+        assertNotNull(ArrayDataSet3D.getBuilder(1));
+        assertNotNull(ArrayDataSet3D.getBuilder(1000000));
         assertNotNull(ArrayDataSet3D.getBuilder(null, 1));
         assertNotNull(ArrayDataSet3D.getBuilder(null, 100));
-        assertNotNull(ArrayDataSet3D.getBuilder(1L, 1));
-        assertNotNull(ArrayDataSet3D.getBuilder(100L, 1));
-        assertNotNull(ArrayDataSet3D.getBuilder(1L, 100));
-        assertNotNull(ArrayDataSet3D.getBuilder(100L, 100));
+        assertNotNull(ArrayDataSet3D.getBuilder(1, 1));
+        assertNotNull(ArrayDataSet3D.getBuilder(100, 1));
+        assertNotNull(ArrayDataSet3D.getBuilder(1, 100));
+        assertNotNull(ArrayDataSet3D.getBuilder(100, 100));
 
         try {
-            ArrayDataSet3D.getBuilder(0L);
+            ArrayDataSet3D.getBuilder(0);
             fail("Managed to get a builder for data set of target size 0.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(0L, 0);
+            ArrayDataSet3D.getBuilder(0, 0);
             fail("Managed to get a builder for data set of target size 0.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(0L, 10);
+            ArrayDataSet3D.getBuilder(0, 10);
             fail("Managed to get a builder for data set of target size 0.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(10L, 0);
+            ArrayDataSet3D.getBuilder(10, 0);
             fail("Managed to get a builder for data set of target size 0.");
         } catch (IllegalArgumentException e) {}
 
@@ -234,27 +234,27 @@ public class ArrayDataSet3DTest
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(-1L);
+            ArrayDataSet3D.getBuilder(-1);
             fail("Managed to get a builder for data set of negative target size.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(-1L, 0);
+            ArrayDataSet3D.getBuilder(-1, 0);
             fail("Managed to get a builder for data set of negative target size.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(-1L, 1);
+            ArrayDataSet3D.getBuilder(-1, 1);
             fail("Managed to get a builder for data set of negative target size.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(-1L, -1);
+            ArrayDataSet3D.getBuilder(-1, -1);
             fail("Managed to get a builder for data set of negative target size.");
         } catch (IllegalArgumentException e) {}
 
         try {
-            ArrayDataSet3D.getBuilder(10L, -1);
+            ArrayDataSet3D.getBuilder(10, -1);
             fail("Managed to get a builder for data set of negative target size.");
         } catch (IllegalArgumentException e) {}
 
@@ -267,8 +267,8 @@ public class ArrayDataSet3DTest
     @Test
     public void testCreateFromDataSources()
     {
-        DataSet3D<Byte, Integer, Double> dataSet = ArrayDataSet.createFromDataSources(null, getTestDataSourceX(10),
-                getTestDataSourceY(10), getTestDataSourceZ(10));
+        DataSet3D<Byte, Integer, Double> dataSet = ArrayDataSet.createFromDataSources((Integer) null,
+                getTestDataSourceX(10), getTestDataSourceY(10), getTestDataSourceZ(10));
         assertEquals("Wrong data set size reported", 10, dataSet.size());
         assertEquals("Wrong dataset minimum returned", (Byte) Byte.MIN_VALUE, dataSet.getMinX());
         assertEquals("Wrong dataset minimum returned", (Integer) Integer.MIN_VALUE, dataSet.getMinY());
@@ -276,11 +276,11 @@ public class ArrayDataSet3DTest
         assertEquals("Wrong dataset maximum returned", (Byte) Byte.MAX_VALUE, dataSet.getMaxX());
         assertEquals("Wrong dataset maximum returned", (Integer) Integer.MAX_VALUE, dataSet.getMaxY());
         assertEquals("Wrong dataset maximum returned", (Double) Double.MAX_VALUE, dataSet.getMaxZ());
-        Iterator<Long> histIt = dataSet.histogramIterator();
+        Iterator<Integer> histIt = dataSet.histogramIterator();
         for (int i = 0; i < 10; i++)
-            assertEquals("Wrong histogram count reported", (Long) 1L, histIt.next());
+            assertEquals("Wrong histogram count reported", (Integer) 1, histIt.next());
 
-        dataSet = ArrayDataSet.createFromDataSources(null, getTestDataSourceX(12), getTestDataSourceY(12),
+        dataSet = ArrayDataSet.createFromDataSources((Integer) null, getTestDataSourceX(12), getTestDataSourceY(12),
                 getTestDataSourceZ(12));
         assertEquals("Wrong data set size reported", 10, dataSet.size());
         assertEquals("Wrong dataset minimum returned", (Byte) Byte.MIN_VALUE, dataSet.getMinX());
@@ -292,18 +292,18 @@ public class ArrayDataSet3DTest
 
         // sort the result because there is no preset order
         histIt = dataSet.histogramIterator();
-        List<Long> histogramData = new ArrayList<Long>(10);
+        List<Integer> histogramData = new ArrayList<Integer>(10);
         while (histIt.hasNext())
             histogramData.add(histIt.next());
         Collections.sort(histogramData);
         histIt = histogramData.iterator();
 
         for (int i = 0; i < 8; i++)
-            assertEquals("Wrong histogram count reported", (Long) 1L, histIt.next());
-        assertEquals("Wrong histogram count reported", (Long) 2L, histIt.next());
-        assertEquals("Wrong histogram count reported", (Long) 2L, histIt.next());
+            assertEquals("Wrong histogram count reported", (Integer) 1, histIt.next());
+        assertEquals("Wrong histogram count reported", (Integer) 2, histIt.next());
+        assertEquals("Wrong histogram count reported", (Integer) 2, histIt.next());
 
-        dataSet = ArrayDataSet.createFromDataSources(5L, getTestDataSourceX(10), getTestDataSourceY(10),
+        dataSet = ArrayDataSet.createFromDataSources(5, getTestDataSourceX(10), getTestDataSourceY(10),
                 getTestDataSourceZ(10));
         assertTrue("Wrong data set size reported", 5 >= dataSet.size());
         assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
@@ -314,9 +314,9 @@ public class ArrayDataSet3DTest
         assertTrue("Wrong dataset maximum returned", Double.MAX_VALUE >= dataSet.getMaxZ());
         histIt = dataSet.histogramIterator();
         for (int i = 0; i < 5; i++)
-            assertEquals("Wrong histogram count reported", (Long) 1L, histIt.next());
+            assertEquals("Wrong histogram count reported", (Integer) 1, histIt.next());
 
-        dataSet = ArrayDataSet.createFromDataSources(50000L, getTestDataSourceX(100000), getTestDataSourceY(100000),
+        dataSet = ArrayDataSet.createFromDataSources(50000, getTestDataSourceX(100000), getTestDataSourceY(100000),
                 getTestDataSourceZ(100000));
         assertTrue("Wrong data set size reported", 50000 >= dataSet.size());
         assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
@@ -327,11 +327,11 @@ public class ArrayDataSet3DTest
         assertTrue("Wrong dataset maximum returned", Double.MAX_VALUE >= dataSet.getMaxZ());
         histIt = dataSet.histogramIterator();
         while (histIt.hasNext())
-            assertThat("Wrong histogram count reported", histIt.next(), either(is(1L)).or(is(2L)));
+            assertThat("Wrong histogram count reported", histIt.next(), either(is(1)).or(is(2)));
 
         // the test data have 2 equal points for every 12 points
-        dataSet = ArrayDataSet.createFromDataSources(null, getTestDataSourceX(120000), getTestDataSourceY(120000),
-                getTestDataSourceZ(120000));
+        dataSet = ArrayDataSet.createFromDataSources((Integer) null, getTestDataSourceX(120000),
+                getTestDataSourceY(120000), getTestDataSourceZ(120000));
         assertEquals("Wrong data set size reported", 100000, dataSet.size());
         assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
         assertTrue("Wrong dataset minimum returned", Integer.MIN_VALUE <= dataSet.getMinY());
@@ -341,7 +341,7 @@ public class ArrayDataSet3DTest
         assertTrue("Wrong dataset maximum returned", Double.MAX_VALUE >= dataSet.getMaxZ());
         histIt = dataSet.histogramIterator();
         while (histIt.hasNext())
-            assertThat("Wrong histogram count reported", histIt.next(), either(is(1L)).or(is(2L)));
+            assertThat("Wrong histogram count reported", histIt.next(), either(is(1)).or(is(2)));
     }
 
     private DataSource<Byte> getTestDataSourceX(final int size)
@@ -377,7 +377,7 @@ public class ArrayDataSet3DTest
             }
 
             @Override
-            public long size()
+            public int size()
             {
                 return size;
             }
@@ -443,7 +443,7 @@ public class ArrayDataSet3DTest
             }
 
             @Override
-            public long size()
+            public int size()
             {
                 return size;
             }
@@ -509,7 +509,7 @@ public class ArrayDataSet3DTest
             }
 
             @Override
-            public long size()
+            public int size()
             {
                 return size;
             }
@@ -618,12 +618,12 @@ public class ArrayDataSet3DTest
         return data;
     }
 
-    private Long[] getHistogram(int size)
+    private Integer[] getHistogram(int size)
     {
         if (size > 10 || size < 1)
             throw new IllegalArgumentException();
 
-        return Arrays.copyOf(new Long[] { 2L, 2L, 3L, 1L, 1000L, 1L, 2L, 3L, 4L, 1L }, size);
+        return Arrays.copyOf(new Integer[] { 2, 2, 3, 1, 1000, 1, 2, 3, 4, 1 }, size);
     }
 
 }

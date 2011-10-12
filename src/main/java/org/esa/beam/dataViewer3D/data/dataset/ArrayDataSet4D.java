@@ -50,8 +50,8 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
      * @param maxWIndex Indices to data[] where the minimum and maximum values are found.
      */
     protected ArrayDataSet4D(DataPoint4D<NumericType<X>, NumericType<Y>, NumericType<Z>, NumericType<W>>[] data,
-            Long[] histogram, int minXIndex, int minYIndex, int minZIndex, int minWIndex, int maxXIndex, int maxYIndex,
-            int maxZIndex, int maxWIndex)
+            Integer[] histogram, int minXIndex, int minYIndex, int minZIndex, int minWIndex, int maxXIndex,
+            int maxYIndex, int maxZIndex, int maxWIndex)
     {
         super(histogram);
 
@@ -113,7 +113,7 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
      * @return The builder that can be used to build this data set.
      */
     static <X extends Number, Y extends Number, Z extends Number, W extends Number> Builder4D<X, Y, Z, W> getBuilder(
-            Long maxPoints)
+            Integer maxPoints)
     {
         return new Builder4D<X, Y, Z, W>(maxPoints, null);
     }
@@ -128,7 +128,7 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
      * @return The builder that can be used to build this data set.
      */
     static <X extends Number, Y extends Number, Z extends Number, W extends Number> Builder4D<X, Y, Z, W> getBuilder(
-            Long maxPoints, long expectedCount)
+            Integer maxPoints, int expectedCount)
     {
         return new Builder4D<X, Y, Z, W>(maxPoints, expectedCount);
     }
@@ -151,7 +151,7 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
          * @param inputSize The number of data points this builder will get as input (<code>null</code> if the count
          *            cannot be determined).
          */
-        private Builder4D(Long maxPoints, Long inputSize)
+        private Builder4D(Integer maxPoints, Integer inputSize)
         {
             super(maxPoints, inputSize);
         }
@@ -225,7 +225,7 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
 
                 arr[i++] = point;
             }
-            return new ArrayDataSet4D<X, Y, Z, W>(arr, data.values().toArray(new Long[] {}), minXIndex, minYIndex,
+            return new ArrayDataSet4D<X, Y, Z, W>(arr, data.values().toArray(new Integer[] {}), minXIndex, minYIndex,
                     minZIndex, minWIndex, maxXIndex, maxYIndex, maxZIndex, maxWIndex);
         }
     }

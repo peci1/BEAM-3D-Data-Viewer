@@ -20,7 +20,7 @@ public interface DataSource<N extends Number> extends Iterable<N>
      * 
      * @return The number of entries this data source provides.
      */
-    long size();
+    int size();
 
     /**
      * Return an iterator that iterates the input data as {@link NumericType}s.

@@ -94,7 +94,7 @@ public abstract class AbstractDataSet implements DataSet
      * @return A new 3D data set from the given data sources.
      */
     public static <X extends Number, Y extends Number, Z extends Number> DataSet3D<X, Y, Z> createFromDataSources(
-            Long maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
     {
         if (maxPoints < ArrayDataSet.MAX_SIZE && x.size() < ArrayDataSet.MAX_SIZE) {
             return ArrayDataSet.createFromDataSources(maxPoints, x, y, z);
@@ -117,7 +117,7 @@ public abstract class AbstractDataSet implements DataSet
      * @return A new 4D data set from the given data sources.
      */
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> DataSet4D<X, Y, Z, W> createFromDataSources(
-            Long maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
     {
         if (maxPoints < ArrayDataSet.MAX_SIZE && x.size() < ArrayDataSet.MAX_SIZE) {
             return ArrayDataSet.createFromDataSources(maxPoints, x, y, z, w);
@@ -137,16 +137,16 @@ public abstract class AbstractDataSet implements DataSet
     protected static abstract class Builder<P extends DataPoint>
     {
         /** The maximum number of data points in the resulting set. */
-        protected final Long         maxPoints;
+        protected final Integer         maxPoints;
         /**
          * The number of data points this builder will get as input (<code>null</code> if the count cannot be
          * determined).
          */
-        protected final Long         inputSize;
+        protected final Integer         inputSize;
         /** The number of already processed points. */
-        protected long               alreadyProcessedPoints = 0L;
+        protected long                  alreadyProcessedPoints = 0L;
         /** The data points that will go in the result (as keys) and their counts (as values). */
-        protected final Map<P, Long> data;
+        protected final Map<P, Integer> data;
 
         /**
          * @param maxPoints The maximum number of data points in the resulting set.
@@ -157,7 +157,7 @@ public abstract class AbstractDataSet implements DataSet
          *             <code>long</code>-sized data sets hasn't been supported yet, but an implementation can be
          *             written.
          */
-        protected Builder(Long maxPoints, Long inputSize)
+        protected Builder(Integer maxPoints, Integer inputSize)
         {
             if (maxPoints != null && maxPoints <= 0)
                 throw new IllegalArgumentException(
@@ -172,17 +172,17 @@ public abstract class AbstractDataSet implements DataSet
             this.inputSize = inputSize;
 
             if (inputSize == null) {
-                data = new HashMap<P, Long>();
+                data = new HashMap<P, Integer>();
             } else if (maxPoints == null) {
                 if (inputSize * 4 / 3 < Integer.MAX_VALUE) {
-                    data = new HashMap<P, Long>((int) (inputSize * 4 / 3));
+                    data = new HashMap<P, Integer>(inputSize * 4 / 3);
                 } else {
                     throw new UnsupportedOperationException(getClass()
                             + ": Building data sets of size larger than Integer.MAX_VALUE hasn't been supported yet.");
                 }
             } else {
                 if (maxPoints * 4 / 3 < Integer.MAX_VALUE) {
-                    data = new HashMap<P, Long>((int) (maxPoints * 4 / 3));
+                    data = new HashMap<P, Integer>(maxPoints * 4 / 3);
                 } else {
                     throw new UnsupportedOperationException(getClass()
                             + ": Building data sets of size larger than Integer.MAX_VALUE hasn't been supported yet.");
@@ -202,7 +202,7 @@ public abstract class AbstractDataSet implements DataSet
             alreadyProcessedPoints++;
 
             if (data.containsKey(point)) {
-                data.put(point, data.get(point) + 1L);
+                data.put(point, data.get(point) + 1);
             } else {
                 // if we know the size of the input set and we want to constrain the result set to contain only a
                 // maximum number of entries, this probability test is a quick way to do it... if all input data points
@@ -211,7 +211,7 @@ public abstract class AbstractDataSet implements DataSet
                 Double addProbabilty = (inputSize == null || maxPoints == null) ? null : ((double) (maxPoints - data
                         .size()) / (inputSize - alreadyProcessedPoints + 1));
                 if (addProbabilty == null || addProbabilty >= 1 || Math.random() <= addProbabilty)
-                    data.put(point, 1L);
+                    data.put(point, 1);
             }
 
             return this;
@@ -241,7 +241,7 @@ public abstract class AbstractDataSet implements DataSet
          *             <code>long</code>-sized data sets hasn't been supported yet, but an implementation can be
          *             written.
          */
-        protected Builder3D(Long maxPoints, Long inputSize)
+        protected Builder3D(Integer maxPoints, Integer inputSize)
         {
             super(maxPoints, inputSize);
         }
@@ -288,7 +288,7 @@ public abstract class AbstractDataSet implements DataSet
          *             <code>long</code>-sized data sets hasn't been supported yet, but an implementation can be
          *             written.
          */
-        protected Builder4D(Long maxPoints, Long inputSize)
+        protected Builder4D(Integer maxPoints, Integer inputSize)
         {
             super(maxPoints, inputSize);
         }

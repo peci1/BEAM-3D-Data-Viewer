@@ -21,7 +21,7 @@ public abstract class ArrayDataSet extends AbstractDataSet
      * The array containing the counts of data points with the same value in the source (indices correspond to indices
      * in <code>data</code>).
      */
-    private final Long[]     histogram;
+    private final Integer[]  histogram;
 
     /**
      * The maximum number of data points this set can contain (<code>null</code> means no other than the free memory
@@ -34,7 +34,7 @@ public abstract class ArrayDataSet extends AbstractDataSet
      * 
      * @param histogram The array containing the counts of data points with the same value in the source.
      */
-    protected ArrayDataSet(Long[] histogram)
+    protected ArrayDataSet(Integer[] histogram)
     {
         this.histogram = histogram;
     }
@@ -47,7 +47,7 @@ public abstract class ArrayDataSet extends AbstractDataSet
     protected abstract DataPoint[] getData();
 
     @Override
-    public long size()
+    public int size()
     {
         return getData().length;
     }
@@ -59,7 +59,7 @@ public abstract class ArrayDataSet extends AbstractDataSet
     }
 
     @Override
-    public Iterator<Long> histogramIterator()
+    public Iterator<Integer> histogramIterator()
     {
         return Arrays.asList(histogram).iterator();
     }
@@ -76,7 +76,7 @@ public abstract class ArrayDataSet extends AbstractDataSet
      * @return A new 3D data set from the given data sources.
      */
     public static <X extends Number, Y extends Number, Z extends Number> DataSet3D<X, Y, Z> createFromDataSources(
-            Long maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
     {
         ArrayDataSet3D.Builder3D<X, Y, Z> builder = ArrayDataSet3D.getBuilder(maxPoints, x.size());
 
@@ -98,7 +98,7 @@ public abstract class ArrayDataSet extends AbstractDataSet
      * @return A new 4D data set from the given data sources.
      */
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> DataSet4D<X, Y, Z, W> createFromDataSources(
-            Long maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
     {
         ArrayDataSet4D.Builder4D<X, Y, Z, W> builder = ArrayDataSet4D.getBuilder(maxPoints, x.size());
 

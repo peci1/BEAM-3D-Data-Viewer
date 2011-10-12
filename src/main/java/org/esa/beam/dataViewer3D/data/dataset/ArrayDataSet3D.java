@@ -47,7 +47,7 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
      * @param maxYIndex Indices to data[] where the minimum and maximum values are found.
      * @param maxZIndex Indices to data[] where the minimum and maximum values are found.
      */
-    protected ArrayDataSet3D(DataPoint3D<NumericType<X>, NumericType<Y>, NumericType<Z>>[] data, Long[] histogram,
+    protected ArrayDataSet3D(DataPoint3D<NumericType<X>, NumericType<Y>, NumericType<Z>>[] data, Integer[] histogram,
             int minXIndex, int minYIndex, int minZIndex, int maxXIndex, int maxYIndex, int maxZIndex)
     {
         super(histogram);
@@ -104,7 +104,7 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
      * 
      * @return The builder that can be used to build this data set.
      */
-    static <X extends Number, Y extends Number, Z extends Number> Builder3D<X, Y, Z> getBuilder(Long maxPoints)
+    static <X extends Number, Y extends Number, Z extends Number> Builder3D<X, Y, Z> getBuilder(Integer maxPoints)
     {
         return new Builder3D<X, Y, Z>(maxPoints, null);
     }
@@ -118,8 +118,8 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
      * 
      * @return The builder that can be used to build this data set.
      */
-    static <X extends Number, Y extends Number, Z extends Number> Builder3D<X, Y, Z> getBuilder(Long maxPoints,
-            long expectedCount)
+    static <X extends Number, Y extends Number, Z extends Number> Builder3D<X, Y, Z> getBuilder(Integer maxPoints,
+            int expectedCount)
     {
         return new Builder3D<X, Y, Z>(maxPoints, expectedCount);
     }
@@ -141,7 +141,7 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
          * @param inputSize The number of data points this builder will get as input (<code>null</code> if the count
          *            cannot be determined).
          */
-        private Builder3D(Long maxPoints, Long inputSize)
+        private Builder3D(Integer maxPoints, Integer inputSize)
         {
             super(maxPoints, inputSize);
         }
@@ -207,7 +207,7 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
                 arr[i++] = point;
             }
 
-            return new ArrayDataSet3D<X, Y, Z>(arr, data.values().toArray(new Long[] {}), minXIndex, minYIndex,
+            return new ArrayDataSet3D<X, Y, Z>(arr, data.values().toArray(new Integer[] {}), minXIndex, minYIndex,
                     minZIndex, maxXIndex, maxYIndex, maxZIndex);
         }
     }
