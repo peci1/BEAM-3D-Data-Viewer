@@ -70,8 +70,8 @@ public final class SimpleDataPoint4D<X extends NumericType<?>, Y extends Numeric
     @Override
     public int hashCode()
     {
-        final int prime = 31;
-        int result = 1;
+        final int prime = 16777619;
+        int result = -2128831035;
         result = prime * result + ((w == null) ? 0 : w.hashCode());
         result = prime * result + ((x == null) ? 0 : x.hashCode());
         result = prime * result + ((y == null) ? 0 : y.hashCode());

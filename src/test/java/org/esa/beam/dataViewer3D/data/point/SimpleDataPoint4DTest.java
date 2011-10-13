@@ -4,7 +4,15 @@
 package org.esa.beam.dataViewer3D.data.point;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Random;
+
+import org.esa.beam.dataViewer3D.data.Common;
 import org.esa.beam.dataViewer3D.data.type.ByteType;
 import org.esa.beam.dataViewer3D.data.type.DoubleType;
 import org.esa.beam.dataViewer3D.data.type.FloatType;
@@ -65,5 +73,78 @@ public class SimpleDataPoint4DTest
         assertEquals("Invalid number of dimensions returned.", 4,
                 new SimpleDataPoint4D<NumericType<?>, NumericType<?>, NumericType<?>, NumericType<?>>(new ByteType(
                         (byte) 5), new ShortType((short) 6), new IntType(7), new LongType(8L)).getDimensions());
+    }
+
+    /**
+     * Test method for {@link org.esa.beam.dataViewer3D.data.point.SimpleDataPoint4D#hashCode()}.
+     */
+    @Test
+    public void testHashCode()
+    {
+        // it is important to do this statistical test, because the hashcodes need to be equally distributed
+        int rounds = 100000;
+        LinkedHashMap<Integer, List<DataPoint>> sameHashes = new LinkedHashMap<Integer, List<DataPoint>>();
+        int hash;
+
+        for (DataPoint point : Common.getTestData4D(rounds)) {
+            hash = point.hashCode();
+            if (sameHashes.get(hash) == null) {
+                sameHashes.put(hash, new LinkedList<DataPoint>());
+            }
+            boolean contains = false;
+            for (DataPoint p : sameHashes.get(hash)) {
+                if (p.equals(point)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains)
+                sameHashes.get(hash).add(point);
+        }
+
+        int i = 0;
+        for (Entry<Integer, List<DataPoint>> e : sameHashes.entrySet()) {
+            if (e.getValue().size() > 1) {
+                i += e.getValue().size();
+            }
+        }
+
+        if ((double) i / rounds > 0.05)
+            fail("More than 5% of different items with colliding hash codes: " + (double) i / rounds * 100 + "%!");
+
+        sameHashes.clear();
+        Random rand = new Random();
+        byte[] bytes = new byte[1];
+        DataPoint point;
+
+        for (i = 0; i < rounds; i++) {
+            rand.nextBytes(bytes);
+            point = new SimpleDataPoint4D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>, NumericType<Float>>(
+                    new ByteType(bytes[0]), new IntType(rand.nextInt()), new DoubleType(rand.nextDouble(),
+                            rand.nextInt(1000)), new FloatType(rand.nextFloat(), rand.nextInt(1000)));
+            hash = point.hashCode();
+            if (sameHashes.get(hash) == null) {
+                sameHashes.put(hash, new LinkedList<DataPoint>());
+            }
+            boolean contains = false;
+            for (DataPoint p : sameHashes.get(hash)) {
+                if (p.equals(point)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains)
+                sameHashes.get(hash).add(point);
+        }
+
+        i = 0;
+        for (Entry<Integer, List<DataPoint>> e : sameHashes.entrySet()) {
+            if (e.getValue().size() > 1) {
+                i += e.getValue().size();
+            }
+        }
+
+        if ((double) i / rounds > 0.05)
+            fail("More than 5% of different items with colliding hash codes: " + (double) i / rounds * 100 + "%!");
     }
 }
