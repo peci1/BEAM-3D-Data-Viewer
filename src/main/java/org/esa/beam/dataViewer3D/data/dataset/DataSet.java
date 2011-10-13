@@ -22,6 +22,13 @@ public interface DataSet extends Iterable<DataPoint>
     int size();
 
     /**
+     * Return the iterator that iterates through the data points and returns them as specific points.
+     * 
+     * @return The iterator that iterates through the data points and returns them as specific points.
+     */
+    Iterator<? extends DataPoint> pointIterator();
+
+    /**
      * Return the iterator that iterates through the histogram entries (counts of data points with the same value) in
      * the same order as iterator() iterates over data points.
      * 

@@ -23,6 +23,7 @@ public interface DataSet3D<X extends Number, Y extends Number, Z extends Number>
      * 
      * @return The iterator that iterates through the data points and returns them as specific 3D points.
      */
+    @Override
     Iterator<DataPoint3D<NumericType<X>, NumericType<Y>, NumericType<Z>>> pointIterator();
 
     /**

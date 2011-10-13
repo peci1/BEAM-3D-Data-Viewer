@@ -25,6 +25,7 @@ public interface DataSet4D<X extends Number, Y extends Number, Z extends Number,
      * 
      * @return The iterator that iterates through the data points and returns them as specific 4D points.
      */
+    @Override
     Iterator<DataPoint4D<NumericType<X>, NumericType<Y>, NumericType<Z>, NumericType<W>>> pointIterator();
 
     /**
