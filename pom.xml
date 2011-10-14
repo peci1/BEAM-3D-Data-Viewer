@@ -1,55 +1,187 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.esa.beam.3D-data-viewer</groupId>
-  <artifactId>beam-3D-data-viewer</artifactId>
-  <version>0.1-SNAPSHOT</version>
-  <packaging>jar</packaging>
+	<groupId>org.esa.beam.3D-data-viewer</groupId>
+	<artifactId>beam-3D-data-viewer</artifactId>
+	<version>0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 
-  <name>BEAM 3D Data Viewer</name>
+	<name>BEAM 3D Data Viewer</name>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  
-  <repositories>
-       <repository>
-           <id>bc-mvn</id>
-           <name>Public Maven Repository at Brockmann Consult</name>
-           <url>http://www.brockmann-consult.de/mvn/os</url>
-           <releases>
-               <enabled>true</enabled>
-               <checksumPolicy>warn</checksumPolicy>
-           </releases>
-           <snapshots>
-               <enabled>true</enabled>
-               <checksumPolicy>warn</checksumPolicy>
-           </snapshots>
-       </repository>
-       <repository>
-           <id>maven2-repository.dev.java.net</id>
-           <name>Java.net repository</name>
-           <url>http://download.java.net/maven/2</url>
-       </repository>
-       <repository>
-           <id>osgeo</id>
-           <name>Open Source Geospatial Foundation Repository</name>
-           <url>http://download.osgeo.org/webdav/geotools/</url>
-       </repository>
-       <!--<repository>-->
-       <!--<id>gt-primary</id>-->
-       <!--<name>Primary GeoTools Maven Repository</name>-->
-       <!--<url>http://maven.geotools.fr/repository</url>-->
-       <!--</repository>-->
-   </repositories>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.8.2</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+	<repositories>
+		<repository>
+			<id>bc-mvn</id>
+			<name>Public Maven Repository at Brockmann Consult</name>
+			<url>http://www.brockmann-consult.de/mvn/os</url>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>maven2-repository.dev.java.net</id>
+			<name>Java.net repository</name>
+			<url>http://download.java.net/maven/2</url>
+		</repository>
+		<repository>
+			<id>osgeo</id>
+			<name>Open Source Geospatial Foundation Repository</name>
+			<url>http://download.osgeo.org/webdav/geotools/</url>
+		</repository>
+		<!--<repository> -->
+		<!--<id>gt-primary</id> -->
+		<!--<name>Primary GeoTools Maven Repository</name> -->
+		<!--<url>http://maven.geotools.fr/repository</url> -->
+		<!--</repository> -->
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jogl</groupId>
+			<artifactId>jogl</artifactId>
+			<version>1.1.1-rc6</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jogl</groupId>
+			<artifactId>jogl-${build.type}</artifactId>
+			<version>1.1.1-rc6</version>
+			<scope>runtime</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<classifier>${build.classifier}</classifier>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>net.java.dev.jogl</groupId>
+									<artifactId>jogl-windows-i586</artifactId>
+									<version>1.1.1-rc6</version>
+									<type>jar</type>
+									<overWrite>true</overWrite>
+									<includes>*.dll</includes>
+									<outputDirectory>${project.build.directory}/native</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy libs</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+							<overWriteIfNewer>true</overWriteIfNewer>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<systemProperties>
+						<property>
+							<name>java.library.path</name>
+							<value>${project.build.directory}/lib</value>
+						</property>
+					</systemProperties>
+				</configuration>
+			</plugin>
+		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-dependency-plugin</artifactId>
+										<versionRange>[2.0,)</versionRange>
+										<goals>
+											<goal>copy-dependencies</goal>
+											<goal>unpack</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<!-- Build Type -->
+	<profiles>
+		<profile>
+			<id>win32</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<build.type>windows-i586</build.type>
+				<build.classifier>win32</build.classifier>
+			</properties>
+		</profile>
+		<profile>
+			<id>linux</id>
+			<properties>
+				<build.type>linux-i586</build.type>
+				<build.classifier>linux</build.classifier>
+			</properties>
+		</profile>
+		<profile>
+			<id>mac</id>
+			<properties>
+				<build.type>macosx-universal</build.type>
+				<build.classifier>macosx</build.classifier>
+			</properties>
+		</profile>
+	</profiles>
 </project>

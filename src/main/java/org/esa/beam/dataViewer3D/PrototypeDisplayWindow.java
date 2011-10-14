@@ -3,6 +3,7 @@
  */
 package org.esa.beam.dataViewer3D;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.Random;
 
@@ -11,7 +12,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 import org.esa.beam.dataViewer3D.data.axis.CoordinatesSystem;
@@ -23,7 +23,7 @@ import org.esa.beam.dataViewer3D.data.type.ByteType;
 import org.esa.beam.dataViewer3D.data.type.DoubleType;
 import org.esa.beam.dataViewer3D.data.type.FloatType;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
-import org.esa.beam.dataViewer3D.gui.TextDataViewer;
+import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
 
 /**
  * A prototype of a window displaying the 3D data viewer.
@@ -74,15 +74,27 @@ public class PrototypeDisplayWindow extends JFrame
         JMenuItem updateMenuItem = new JMenuItem("Update view");
         dataMenu.add(updateMenuItem);
 
-        JPanel dataViewerWrapper = new JPanel();
+        JPanel dataViewerWrapper = new JPanel(new BorderLayout());
         dataViewerWrapper.setPreferredSize(new Dimension(600, 600));
-        add(dataViewerWrapper);
+        add(dataViewerWrapper, BorderLayout.CENTER);
 
-        final TextDataViewer viewer = new TextDataViewer();
-        JScrollPane scrollPane = new JScrollPane(viewer);
-        scrollPane.setPreferredSize(new Dimension(550, 550));
-        dataViewerWrapper.add(scrollPane);
-        viewer.setText("Loading data");
+        // final TextDataViewer viewer = new TextDataViewer();
+        // JScrollPane scrollPane = new JScrollPane(viewer);
+        // scrollPane.setPreferredSize(new Dimension(550, 550));
+        // dataViewerWrapper.add(scrollPane);
+        // viewer.setText("Loading data");
+        // new Thread(new Runnable() {
+        // @Override
+        // public void run()
+        // {
+        // viewer.setDataSet(createDataSet());
+        // viewer.setCoordinatesSystem(createCoordinatesSystem(viewer.getDataSet()));
+        // System.gc();
+        // }
+        // }).start();
+
+        final JOGLDataViewer viewer = new JOGLDataViewer();
+        dataViewerWrapper.add(viewer);
         new Thread(new Runnable() {
             @Override
             public void run()
@@ -99,7 +111,7 @@ public class PrototypeDisplayWindow extends JFrame
         final int size = Integer.MAX_VALUE / 2000;
 
         DataSource<Float> src1 = new RandomDataSource<Float>(size, 100f, 500f) {
-            Random random = new Random(0l);
+            Random random = new Random();
 
             @Override
             protected Float getRandomValue()
@@ -114,8 +126,8 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        DataSource<Double> src2 = new RandomDataSource<Double>(size, -10d, 10d) {
-            Random random = new Random(0l);
+        DataSource<Double> src2 = new RandomDataSource<Double>(size, 100d, 500d) {
+            Random random = new Random();
 
             @Override
             protected Double getRandomValue()
@@ -130,8 +142,8 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        DataSource<Byte> src3 = new RandomDataSource<Byte>(size, (byte) 3, (byte) 120) {
-            Random random = new Random(1l);
+        DataSource<Byte> src3 = new RandomDataSource<Byte>(size, (byte) -110, (byte) -100) {
+            Random random = new Random();
 
             @Override
             protected Byte getRandomValue()
@@ -146,7 +158,7 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        return AbstractDataSet.createFromDataSources(100, src1, src2, src3);
+        return AbstractDataSet.createFromDataSources(1000, src1, src2, src3);
     }
 
     private CoordinatesSystem createCoordinatesSystem(DataSet dataSet)
