@@ -108,9 +108,10 @@ public class PrototypeDisplayWindow extends JFrame
 
     private DataSet createDataSet()
     {
-        final int size = Integer.MAX_VALUE / 2000;
+        // final int size = Integer.MAX_VALUE / 2000;
+        final int size = 20000;
 
-        DataSource<Float> src1 = new RandomDataSource<Float>(size, 100f, 500f) {
+        DataSource<Float> src1 = new RandomDataSource<Float>(size, 0f, 500f) {
             Random random = new Random();
 
             @Override
@@ -126,7 +127,7 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        DataSource<Double> src2 = new RandomDataSource<Double>(size, 100d, 500d) {
+        DataSource<Double> src2 = new RandomDataSource<Double>(size, 0d, 500d) {
             Random random = new Random();
 
             @Override
@@ -142,7 +143,7 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        DataSource<Byte> src3 = new RandomDataSource<Byte>(size, (byte) -110, (byte) -100) {
+        DataSource<Byte> src3 = new RandomDataSource<Byte>(size, (byte) 0, (byte) 20) {
             Random random = new Random();
 
             @Override
@@ -158,7 +159,7 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        return AbstractDataSet.createFromDataSources(1000, src1, src2, src3);
+        return AbstractDataSet.createFromDataSources(20000, src1, src2, src3);
     }
 
     private CoordinatesSystem createCoordinatesSystem(DataSet dataSet)
