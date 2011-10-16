@@ -245,7 +245,14 @@ public class JOGLDataViewer extends JPanel implements DataViewer
 
             private void drawGrid(GL gl, Grid grid)
             {
+                gl.glBegin(GL.GL_LINES);
+                gl.glColor3f(0.5f, 0.5f, 0.5f);
 
+                for (double[] line : grid.getGridLines()) {
+                    gl.glVertex3dv(line, 0);
+                    gl.glVertex3dv(line, 3);
+                }
+                gl.glEnd();
             }
         };
 

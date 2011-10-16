@@ -14,6 +14,7 @@ import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.grid.Grid;
+import org.esa.beam.dataViewer3D.data.grid.GridFromTicks;
 
 /**
  * A system of aces and grids.
@@ -113,7 +114,7 @@ public abstract class CoordinatesSystem
                 multiply(1.25, sub(dataSet.getMaxZ(), dataSet.getMinZ()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinZ(), 10));
 
-        Grid grid = new Grid(axisX, axisY, axisZ);
+        Grid grid = new GridFromTicks(axisX, axisY, axisZ);
 
         return new CoordinatesSystem3D<X, Y, Z>(axisX, axisY, axisZ, grid);
     }
@@ -140,7 +141,7 @@ public abstract class CoordinatesSystem
         Axis<W> axisW = new LinearAxis<W>("w", dataSet.getMinW(), dataSet.getMaxW(),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinW(), 10));
 
-        Grid grid = new Grid(axisX, axisY, axisZ);
+        Grid grid = new GridFromTicks(axisX, axisY, axisZ);
 
         return new CoordinatesSystem4D<X, Y, Z, W>(axisX, axisY, axisZ, axisW, grid);
     }

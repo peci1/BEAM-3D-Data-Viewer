@@ -3,24 +3,27 @@
  */
 package org.esa.beam.dataViewer3D.data.grid;
 
-import org.esa.beam.dataViewer3D.data.axis.Axis;
-
 /**
  * A grid in a coordinate system.
  * 
  * @author Martin Pecka
  */
-public class Grid
+public abstract class Grid
 {
+
+    /** The array of grid lines to be drawn. */
+    protected double[][] gridLines;
+
     /**
-     * Create a grid based on the given aces.
+     * Return the array of grid lines to be drawn.
+     * <p>
+     * It is an array of arrays, where every second-level array has six items - three for the startpoint and three for
+     * the endpoint.
      * 
-     * @param xAxis The x axis.
-     * @param yAxis The y axis.
-     * @param zAxis The z axis.
+     * @return The array of grid lines to be drawn.
      */
-    public Grid(Axis<?> xAxis, Axis<?> yAxis, Axis<?> zAxis)
+    public double[][] getGridLines()
     {
-        // TODO
+        return gridLines;
     }
 }
