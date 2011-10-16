@@ -51,6 +51,14 @@ public abstract class TickGenerator<N extends Number>
     }
 
     /**
+     * Return the length of a tick (in the same units as is the axis). If set to a high value, this means we want a grid
+     * to be drawn.
+     * 
+     * @return The length of a tick.
+     */
+    public abstract N getTickLength();
+
+    /**
      * Set the minimum and maximum values of the axis this generator generates ticks for.
      * 
      * @param min Minimum value displayed on the axis.

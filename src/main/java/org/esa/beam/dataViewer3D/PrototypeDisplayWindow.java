@@ -14,7 +14,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import org.esa.beam.dataViewer3D.data.axis.CoordinatesSystem;
+import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
 import org.esa.beam.dataViewer3D.data.dataset.AbstractDataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
@@ -101,6 +101,7 @@ public class PrototypeDisplayWindow extends JFrame
             {
                 viewer.setDataSet(createDataSet());
                 viewer.setCoordinatesSystem(createCoordinatesSystem(viewer.getDataSet()));
+                viewer.getCoordinatesSystem().setShowGrid(true);
                 System.gc();
             }
         }).start();
@@ -111,7 +112,7 @@ public class PrototypeDisplayWindow extends JFrame
         // final int size = Integer.MAX_VALUE / 2000;
         final int size = 20000;
 
-        DataSource<Float> src1 = new RandomDataSource<Float>(size, 0f, 500f) {
+        DataSource<Float> src1 = new RandomDataSource<Float>(size, -256f, 256f) {
             Random random = new Random();
 
             @Override
@@ -127,7 +128,7 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        DataSource<Double> src2 = new RandomDataSource<Double>(size, 0d, 500d) {
+        DataSource<Double> src2 = new RandomDataSource<Double>(size, 0d, 256d) {
             Random random = new Random();
 
             @Override

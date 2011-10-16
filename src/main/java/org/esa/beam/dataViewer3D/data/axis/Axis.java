@@ -33,6 +33,13 @@ public interface Axis<N extends Number>
     N getMax();
 
     /**
+     * Return the length of the axis.
+     * 
+     * @return The length of the axis.
+     */
+    N getLength();
+
+    /**
      * Is the scale of this axis logarithmic?
      * 
      * @return Whether the scale of this axis is logarithmic.
@@ -54,4 +61,19 @@ public interface Axis<N extends Number>
      *         <code>null</code> value means that the tick has no label.
      */
     String[] getTickLabels();
+
+    /**
+     * Return the length of a tick (in the same units as is the axis). If set to a high value, this means we want a grid
+     * to be drawn.
+     * 
+     * @return The length of a tick.
+     */
+    N getTickLength();
+
+    /**
+     * Set the length of a tick.
+     * 
+     * @param length The new length.
+     */
+    void setTickLength(N length);
 }

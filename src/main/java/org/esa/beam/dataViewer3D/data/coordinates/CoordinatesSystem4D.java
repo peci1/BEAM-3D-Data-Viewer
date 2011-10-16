@@ -1,7 +1,10 @@
 /**
  * 
  */
-package org.esa.beam.dataViewer3D.data.axis;
+package org.esa.beam.dataViewer3D.data.coordinates;
+
+import org.esa.beam.dataViewer3D.data.axis.Axis;
+import org.esa.beam.dataViewer3D.data.grid.Grid;
 
 /**
  * A 4D coordinates system.
@@ -36,6 +39,21 @@ public class CoordinatesSystem4D<X extends Number, Y extends Number, Z extends N
      */
     protected CoordinatesSystem4D(Axis<X> x, Axis<Y> y, Axis<Z> z, Axis<W> w)
     {
+        this(x, y, z, w, null);
+    }
+
+    /**
+     * Create a 4D coordinate system from the given aces and with the given grid.
+     * 
+     * @param x The x axis.
+     * @param y The y axis.
+     * @param z The z axis.
+     * @param w The w axis.
+     * @param grid The grid to use (may be <code>null</code>).
+     */
+    protected CoordinatesSystem4D(Axis<X> x, Axis<Y> y, Axis<Z> z, Axis<W> w, Grid grid)
+    {
+        super(grid);
         axisX = x;
         axisY = y;
         axisZ = z;

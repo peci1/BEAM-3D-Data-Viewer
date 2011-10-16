@@ -4,6 +4,7 @@
 package org.esa.beam.dataViewer3D.data.axis;
 
 import org.esa.beam.dataViewer3D.data.axis.tickgenerator.TickGenerator;
+import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
 
 /**
  * The base for all axis implementations.
@@ -20,6 +21,9 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     /** Minimum and maximum values displayed on the axis. */
     protected N        min, max;
 
+    /** The length of the axis. */
+    protected N        length;
+
     /** Array of values at which ticks are found. */
     protected N[]      ticks;
 
@@ -28,6 +32,12 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
      * means that the tick has no label.
      */
     protected String[] tickLabels;
+
+    /**
+     * The length of a tick (in the same units as is the axis). If set to a high value, this means we want a grid
+     * to be drawn.
+     */
+    protected N        tickLength;
 
     /**
      * @param label The label of this axis.
@@ -40,10 +50,12 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
         this.label = label;
         this.min = min;
         this.max = max;
+        updateLength();
         tickGenerator.setBounds(min, max);
         tickGenerator.generateTicks();
         this.ticks = tickGenerator.getTicks();
         this.tickLabels = tickGenerator.getTickLabels();
+        this.tickLength = tickGenerator.getTickLength();
     }
 
     @Override
@@ -60,6 +72,14 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
         this.label = label;
     }
 
+    /**
+     * Update the length of this axis.
+     */
+    protected void updateLength()
+    {
+        length = NumberTypeUtils.sub(max, min);
+    }
+
     @Override
     public N getMin()
     {
@@ -72,6 +92,7 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     public void setMin(N min)
     {
         this.min = min;
+        updateLength();
     }
 
     @Override
@@ -86,6 +107,13 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     public void setMax(N max)
     {
         this.max = max;
+        updateLength();
+    }
+
+    @Override
+    public N getLength()
+    {
+        return length;
     }
 
     @Override
@@ -98,6 +126,18 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     public String[] getTickLabels()
     {
         return tickLabels;
+    }
+
+    @Override
+    public N getTickLength()
+    {
+        return this.tickLength;
+    }
+
+    @Override
+    public void setTickLength(N length)
+    {
+        this.tickLength = length;
     }
 
     @Override

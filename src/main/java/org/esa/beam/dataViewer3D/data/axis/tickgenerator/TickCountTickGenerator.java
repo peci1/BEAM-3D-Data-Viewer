@@ -5,6 +5,8 @@ package org.esa.beam.dataViewer3D.data.axis.tickgenerator;
 
 import java.util.Arrays;
 
+import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
+
 /**
  * A tick generator that generates ticks based on the intended number of ticks placing them uniformly along the axis.
  * 
@@ -103,5 +105,15 @@ public abstract class TickCountTickGenerator<N extends Number> extends TickGener
 
         throw new UnsupportedOperationException(TickCountTickGenerator.class + ": unsupported numeric type: "
                 + sampleValue.getClass());
+    }
+
+    @Override
+    public N getTickLength()
+    {
+        if (min instanceof Integer || min instanceof Byte || min instanceof Long || min instanceof Short)
+            return NumberTypeUtils.castToType(min,
+                    NumberTypeUtils.max(1, NumberTypeUtils.multiply(0.05, NumberTypeUtils.sub(max, min))));
+        else
+            return NumberTypeUtils.multiply(0.05, NumberTypeUtils.sub(max, min));
     }
 }

@@ -3,7 +3,7 @@
  */
 package org.esa.beam.dataViewer3D.gui;
 
-import org.esa.beam.dataViewer3D.data.axis.CoordinatesSystem;
+import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 
 /**
