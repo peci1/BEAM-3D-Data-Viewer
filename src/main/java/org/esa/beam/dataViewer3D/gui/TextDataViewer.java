@@ -61,4 +61,10 @@ public class TextDataViewer extends JTextArea implements DataViewer
         setDataSet(dataSet);// to update the view
     }
 
+    @Override
+    public void update()
+    {
+        // TODO
+    }
+
 }

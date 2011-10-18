@@ -1,0 +1,58 @@
+<module>
+	<manifestVersion>1.0.0</manifestVersion>
+	<symbolicName>beam-3D-data-viewer</symbolicName>
+	<version>0.5</version>
+	<name>3D Data Viewer</name>
+	<description>
+        <![CDATA[
+            <p>The purpose of the 3D data viewer is to display an interactive 3D visualization of histograms of 3 or 4 
+            selected bands.</p>
+        ]]>
+	</description>
+
+	<vendor>Brockmann Consult GmbH</vendor>
+	<contactAddress>
+		Max Planck Str.2, 21502 Geesthacht (Germany)
+	</contactAddress>
+	<copyright>(C) 2007 by Brockmann Consult GmbH</copyright>
+	<url>www.brockmann-consult.de/cms/web/beam/welcome</url>
+	<licenseUrl>http://www.gnu.org/licenses/gpl.html</licenseUrl>
+
+	<changelog>
+        <![CDATA[]]>
+	</changelog>
+
+	<dependency>
+		<module>beam-core</module>
+	</dependency>
+	<dependency>
+		<module>beam-gpf</module>
+	</dependency>
+	<dependency>
+		<module>beam-visat</module>
+	</dependency>
+	<dependency>
+		<module>beam-jogl</module>
+	</dependency>
+
+	<categories>Application</categories>
+
+	<extension point="beam-ui:toolViews">
+		<toolView>
+			<id>dataViewer3D</id>
+			<!-- TODO help <helpID>dataViewer3D</helpID> -->
+			<class>org.esa.beam.dataViewer3D.beamIntegration.DataViewer3DToolView</class>
+			<title>3D Data Viewer</title>
+			<tabTitle>3D Data Viewer</tabTitle>
+			<mnemonic>3</mnemonic>
+			<accelerator>ctrl alt 3</accelerator>
+			<description>Display 3D histogram of selected bands.</description>
+			<!-- TODO icons <smallIcon>/org/esa/beam/resources/images/icons/PixelInfo16.gif</smallIcon>
+			<largeIcon>/org/esa/beam/resources/images/icons/PixelInfo24.gif</largeIcon>-->
+			<initState>DOCKED</initState>
+			<initSide>WEST</initSide>
+			<initIndex>0</initIndex>
+		</toolView>
+	</extension>
+
+</module>

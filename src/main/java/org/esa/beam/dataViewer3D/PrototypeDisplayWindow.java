@@ -60,7 +60,7 @@ public class PrototypeDisplayWindow extends JFrame
     /**
      * Populate the window with Swing components.
      */
-    protected void createAndSetupGUI()
+    public void createAndSetupGUI()
     {
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);

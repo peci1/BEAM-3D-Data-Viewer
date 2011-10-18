@@ -46,21 +46,41 @@ public class JOGLDataViewer extends JPanel implements DataViewer
     /** */
     private static final long     serialVersionUID  = -4470588776978542020L;
 
+    /** The data set this viewer displays. */
     private DataSet               dataSet           = null;
+    /** The coordinates system used for displaying the data and drawing the grid. */
     private CoordinatesSystem     coordinatesSystem = null;
+    /** The OpenGL canvas we draw onto. */
     private final GLCanvas        canvas;
+    /** The listener for OpenGL events - handles redrawing and so on. */
     private final GLEventListener glEventListener;
+    /** The distance of the near clipping plane (in OpenGL units). */
     private final double          nearClippingPlane = 1;
+    /** The distance of the far clipping plane (in OpenGL units). */
     private final double          farClippingPlane  = 10000;
     /** Vertical field of view in degrees. */
     private final double          fovVertical       = 45;
 
+    /** The affine transformation that affects the display of the data set. */
     private double[]              transform         = Matrix.identity();
+    /** The center of the data set (the camera will target it after initialization). */
     private double[]              center            = new double[] { 0, 0, 0 };
+    /**
+     * The coordinates of the "lowest" point (the point doesn't have to exist, it is just a collection of minimum values
+     * in every coordinate).
+     */
     private double[]              minPoint          = new double[] { 0, 0, 0 };
+    /**
+     * The coordinates of the "highest" point (the point doesn't have to exist, it is just a collection of maximum
+     * values in every coordinate).
+     */
     private double[]              maxPoint          = new double[] { 0, 0, 0 };
+    /** The matrix used for setting up camera. */
     private double[]              projectionMatrix  = new double[16];
 
+    /**
+     * Create a new data viewer using OpenGL for rendering the data set.
+     */
     public JOGLDataViewer()
     {
         setLayout(new BorderLayout());
@@ -136,6 +156,13 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 drawAces(gl, glu, aces);
             }
 
+            /**
+             * Draw the given aces onto the canvas.
+             * 
+             * @param gl The {@link javax.media.opengl.GL} instance to use.
+             * @param glu The {@link javax.media.opengl.glu.GLU} instance to use.
+             * @param aces The aces to draw.
+             */
             private void drawAces(GL gl, GLU glu, Axis<?>[] aces)
             {
                 // in order to set different line widths we must call begin/end methods between the width changes
@@ -215,6 +242,11 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 // gl.glEnd();
             }
 
+            /**
+             * Draw points from the data set.
+             * 
+             * @param gl The {@link javax.media.opengl.GL} instance to use.
+             */
             private void drawDataset(GL gl)
             {
                 float maxDistance = (float) Math.sqrt(256 * 256 + 256 * 256 + 20 * 20); // TODO dev stuff
@@ -243,6 +275,12 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 gl.glEnd();
             }
 
+            /**
+             * Draw the grid.
+             * 
+             * @param gl The {@link javax.media.opengl.GL} instance to use.
+             * @param grid The grid to draw.
+             */
             private void drawGrid(GL gl, Grid grid)
             {
                 gl.glBegin(GL.GL_LINES);
@@ -330,9 +368,7 @@ public class JOGLDataViewer extends JPanel implements DataViewer
         add(canvas, BorderLayout.CENTER);
     }
 
-    /**
-     * Update the view.
-     */
+    @Override
     public void update()
     {
         canvas.display();

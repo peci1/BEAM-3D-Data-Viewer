@@ -40,4 +40,9 @@ public interface DataViewer
      * @param system The new coordinates system to set.
      */
     void setCoordinatesSystem(CoordinatesSystem system);
+
+    /**
+     * Update the view.
+     */
+    void update();
 }
