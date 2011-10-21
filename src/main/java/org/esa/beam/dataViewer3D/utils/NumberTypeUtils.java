@@ -133,6 +133,9 @@ public class NumberTypeUtils
     @SuppressWarnings("unchecked")
     public static <N extends Number> N castToType(N numberOfDesiredType, Number number)
     {
+        if (number == null)
+            return null;
+
         if (numberOfDesiredType instanceof Integer) {
             if (number.doubleValue() > Integer.MAX_VALUE)
                 return (N) (Object) Integer.MAX_VALUE;
