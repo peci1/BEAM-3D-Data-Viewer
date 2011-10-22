@@ -48,9 +48,7 @@ public class TickCountTickGenerator extends
         tickLabels[0] = String.format("%1$1.4G", min);
         tickLabels[numTicks + 1] = String.format("%1$1.4G", max);
 
-        double difference = max - min; // ok, max is always bigger
-
-        double step = difference / (numTicks + 1);
+        double step = max / (numTicks + 1) - min / (numTicks + 1);
 
         for (int i = 1; i < numTicks + 1; i++) {
             ticks[i] = min + i * step;

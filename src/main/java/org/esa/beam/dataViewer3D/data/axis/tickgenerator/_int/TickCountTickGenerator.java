@@ -48,11 +48,7 @@ public class TickCountTickGenerator extends
         tickLabels[0] = min.toString();
         tickLabels[numTicks + 1] = max.toString();
 
-        int difference = max - min; // ok, max is always bigger
-
-        // if we have more ticks than integers between min and max, then we have to create less ticks
-        if (difference < numTicks)
-            numTicks = difference - 1;
+        long difference = max - min; // ok, max is always bigger
 
         double step = ((double) difference) / (numTicks + 1);
 
