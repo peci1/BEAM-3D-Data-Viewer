@@ -3,6 +3,8 @@
  */
 package org.esa.beam.dataViewer3D.beamIntegration;
 
+import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.castToType;
+
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -19,6 +21,8 @@ import javax.swing.JPanel;
 import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
 import org.esa.beam.dataViewer3D.data.dataset.AbstractDataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
+import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
+import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
 import org.esa.beam.dataViewer3D.data.source.RandomDataSource;
 import org.esa.beam.dataViewer3D.data.type.ByteType;
@@ -29,6 +33,7 @@ import org.esa.beam.dataViewer3D.gui.DataViewer;
 import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
+import org.esa.beam.framework.datamodel.ProductNodeList;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductTreeListenerAdapter;
 import org.esa.beam.visat.VisatApp;
@@ -44,11 +49,13 @@ public class DataViewer3DToolView extends AbstractToolView
 {
 
     /** The container for the DataViewer or its placeholder button */
-    protected final JPanel     viewerPane    = new JPanel();
+    protected final JPanel     viewerPane     = new JPanel();
     /** The bands this data viewer uses to generate the source data. */
-    protected final List<Band> involvedBands = new LinkedList<Band>();
+    protected final List<Band> involvedBands  = new LinkedList<Band>();
+    /** The expression denoting the mask for valid pixels to be read. */
+    protected String           maskExpression = "";
     /** The data viewer used to display the data. */
-    protected final DataViewer dataViewer    = createDataViewer();
+    protected final DataViewer dataViewer     = createDataViewer();
 
     @Override
     protected JComponent createControl()
@@ -121,7 +128,13 @@ public class DataViewer3DToolView extends AbstractToolView
     }
 
     /**
-     * Set the given bands as the source for this viewer and update the view.
+     * Set the given bands as the source for this viewer.
+     * <p>
+     * This method doesn't update the view.
+     * <p>
+     * Call
+     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double)}
+     * if needed.
      * 
      * @param bandX The band used for the x axis.
      * @param bandY The band used for the y axis.
@@ -133,7 +146,13 @@ public class DataViewer3DToolView extends AbstractToolView
     }
 
     /**
-     * Set the given bands as the source for this viewer and update the view.
+     * Set the given bands as the source for this viewer.
+     * <p>
+     * This method doesn't update the view.
+     * <p>
+     * Call
+     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double)}
+     * if needed.
      * 
      * @param bandX The band used for the x axis.
      * @param bandY The band used for the y axis.
@@ -149,14 +168,53 @@ public class DataViewer3DToolView extends AbstractToolView
         if (bandW != null)
             involvedBands.add(bandW);
 
-        dataViewer.setDataSet(createDataSet());
+        dataViewer.setDataSet(createDataSet()); // TODO dev stuff
+    }
+
+    /**
+     * Create a default coordinates system for the current data set, where the bounds are computed from the data set's
+     * minima and maxima.
+     */
+    public void createDefaultCoordinatesSystemForCurrentDataSet()
+    {
         dataViewer.setCoordinatesSystem(CoordinatesSystem.createDefaultCoordinatesSystem(dataViewer.getDataSet()));
         dataViewer.getCoordinatesSystem().setShowGrid(true);
+    }
 
-        viewerPane.removeAll();
-        viewerPane.add((JComponent) dataViewer); // dataViewer is surely a JComponent (see createDataViewer() )
-
-        updateView();
+    /**
+     * Create a coordinates system for the current data set. Non-null parameters are used as bounds, <code>null</code>
+     * parameters are autocomputed from the data set's minima and maxima.
+     * 
+     * @param xMin Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param xMax Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yMin Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yMax Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zMin Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zMax Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param wMin Minimum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
+     *            Pass <code>null</code> if the data set is only 3-dimensional.
+     * @param wMax Maximum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
+     *            Pass <code>null</code> if the data set is only 3-dimensional.
+     */
+    @SuppressWarnings("unchecked")
+    public <X extends Number, Y extends Number, Z extends Number, W extends Number> void createCoordinatesSystemForCurrentDataSet(
+            Double xMin, Double xMax, Double yMin, Double yMax, Double zMin, Double zMax, Double wMin, Double wMax)
+    {
+        if (dataViewer.getDataSet() instanceof DataSet3D<?, ?, ?>) {
+            DataSet3D<X, Y, Z> dataSet = (DataSet3D<X, Y, Z>) dataViewer.getDataSet();
+            dataViewer.setCoordinatesSystem(CoordinatesSystem.createCoordinatesSystem(
+                    castToType(dataSet.getMinX(), xMin), castToType(dataSet.getMinX(), xMax),
+                    castToType(dataSet.getMinY(), yMin), castToType(dataSet.getMaxY(), yMax),
+                    castToType(dataSet.getMinZ(), zMin), castToType(dataSet.getMaxZ(), zMax), dataSet));
+        } else {
+            DataSet4D<X, Y, Z, W> dataSet = (DataSet4D<X, Y, Z, W>) dataViewer.getDataSet();
+            dataViewer.setCoordinatesSystem(CoordinatesSystem.createCoordinatesSystem(
+                    castToType(dataSet.getMinX(), xMin), castToType(dataSet.getMinX(), xMax),
+                    castToType(dataSet.getMinY(), yMin), castToType(dataSet.getMaxY(), yMax),
+                    castToType(dataSet.getMinZ(), zMin), castToType(dataSet.getMaxZ(), zMax),
+                    castToType(dataSet.getMinW(), wMin), castToType(dataSet.getMaxW(), wMax), dataSet));
+        }
+        dataViewer.getCoordinatesSystem().setShowGrid(true);
     }
 
     /**
@@ -164,7 +222,13 @@ public class DataViewer3DToolView extends AbstractToolView
      */
     public void updateView()
     {
-        dataViewer.update();
+        if (dataViewer.getDataSet() != null) {
+            if (!(viewerPane.getComponent(0) instanceof DataViewer)) {
+                viewerPane.removeAll();
+                viewerPane.add((JComponent) dataViewer); // dataViewer is surely a JComponent (see createDataViewer() )
+            }
+            dataViewer.update();
+        }
     }
 
     /**
@@ -264,9 +328,30 @@ public class DataViewer3DToolView extends AbstractToolView
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            setBands(null, null, null); // TODO dev stuff
-        }
+            final Product[] prods = VisatApp.getApp().getProductManager().getProducts();
+            final ProductNodeList<Product> products = new ProductNodeList<Product>();
+            for (Product prod : prods) {
+                products.add(prod);
+            }
 
+            BandSelectionDialog bandSelectionDialog = new BandSelectionDialog(VisatApp.getApp(), VisatApp.getApp()
+                    .getSelectedProduct(), products, involvedBands, maskExpression, "");
+            bandSelectionDialog.show();
+
+            List<Band> bands = bandSelectionDialog.getBands();
+            if (bands != null && bands.size() > 0) {
+                if (bands.size() == 3) {
+                    setBands(bands.get(0), bands.get(1), bands.get(2));
+                } else if (bands.size() == 4) {
+                    setBands(bands.get(0), bands.get(1), bands.get(2), bands.get(3));
+                }
+                maskExpression = bandSelectionDialog.getMaskExpression();
+                createCoordinatesSystemForCurrentDataSet(bandSelectionDialog.getxMin(), bandSelectionDialog.getxMax(),
+                        bandSelectionDialog.getyMin(), bandSelectionDialog.getyMax(), bandSelectionDialog.getzMin(),
+                        bandSelectionDialog.getzMax(), bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax());
+                updateView();
+            }
+        }
     }
 
     /**
