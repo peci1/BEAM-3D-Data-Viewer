@@ -4,7 +4,6 @@
 package org.esa.beam.dataViewer3D.data.source;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import javax.help.UnsupportedOperationException;
 
@@ -17,6 +16,7 @@ import org.esa.beam.dataViewer3D.data.type.ShortType;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.util.Guardian;
+import org.esa.beam.util.SkippableIterator;
 import org.esa.beam.visat.VisatApp;
 
 /**
@@ -37,6 +37,14 @@ public class BandDataSource<N extends Number> implements DataSource<N>
     /** The precision for decimal type bands. */
     protected final Integer                 precision;
 
+    /**
+     * Create the data source from the given band.
+     * <p>
+     * Use a default of 10 valid decimal digits for comparing decimal numbers.
+     * 
+     * @param band The source band.
+     * @param dataType Type of data to be read from the band's raster.
+     */
     protected BandDataSource(Band band, Class<N> dataType)
     {
         this.band = band;
@@ -44,6 +52,13 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         this.precision = 10;
     }
 
+    /**
+     * Create the data source from the given band.
+     * 
+     * @param band The source band.
+     * @param dataType Type of data to be read from the band's raster.
+     * @param precision The number of valid decimal digits for decimal numbers comparison.
+     */
     protected BandDataSource(Band band, Class<N> dataType, int precision)
     {
         this.band = band;
@@ -53,7 +68,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
 
     @SuppressWarnings("unchecked")
     @Override
-    public Iterator<N> iterator()
+    public SkippableIterator<N> iterator()
     {
         if (!band.hasRasterData()) {
             try {
@@ -64,19 +79,19 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         }
 
         if (dataType == Double.class)
-            return (Iterator<N>) new DoubleIterator();
+            return (SkippableIterator<N>) new DoubleIterator();
         else if (dataType == Float.class)
-            return (Iterator<N>) new FloatIterator();
+            return (SkippableIterator<N>) new FloatIterator();
         else if (dataType == Integer.class)
-            return (Iterator<N>) new IntegerIterator();
+            return (SkippableIterator<N>) new IntegerIterator();
         else if (dataType == Short.class)
-            return (Iterator<N>) new ShortIterator();
+            return (SkippableIterator<N>) new ShortIterator();
         else
-            return (Iterator<N>) new ByteIterator();
+            return (SkippableIterator<N>) new ByteIterator();
     }
 
     @Override
-    public Iterator<NumericType<N>> numericTypeIterator()
+    public SkippableIterator<NumericType<N>> numericTypeIterator()
     {
         if (!band.hasRasterData()) {
             try {
@@ -87,7 +102,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         }
 
         return new AbstractIterator<NumericType<N>>() {
-            private final Iterator<? extends NumericType<?>> it = createIterator();
+            private final SkippableIterator<? extends NumericType<?>> it = createIterator();
 
             @SuppressWarnings("unchecked")
             @Override
@@ -102,7 +117,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 return it.hasNext();
             }
 
-            private Iterator<? extends NumericType<?>> createIterator()
+            private SkippableIterator<? extends NumericType<?>> createIterator()
             {
                 if (dataType == Double.class)
                     return new DoubleNumericTypeIterator(precision);
@@ -115,6 +130,13 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 else
                     return new ByteNumericTypeIterator();
             }
+
+            @Override
+            public void skip(int n)
+            {
+                it.skip(n);
+            }
+
         };
     }
 
@@ -139,7 +161,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
      * Create the data source out of the given band.
      * 
      * @param band The band to use as the source for this data source.
-     * @param precision If the band is decimal, defines the precision of comparisons (in the number of decimal digits).
+     * @param precision The number of valid decimal digits for decimal numbers comparison.
      * @return The data source.
      */
     public static BandDataSource<?> createForBand(Band band, Integer precision)
@@ -167,28 +189,47 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         }
     }
 
-    protected abstract class AbstractIterator<T> implements Iterator<T>
+    /**
+     * An iterator not supporting the remove operation.
+     * 
+     * @author Martin Pecka
+     * @param <T> Type of the items to iterate over.
+     */
+    protected abstract class AbstractIterator<T> implements SkippableIterator<T>
     {
         @Override
-        public void remove()
+        public final void remove()
         {
             throw new UnsupportedOperationException();
         }
     }
 
-    protected abstract class AbstractNumberIterator<T> extends AbstractIterator<T>
+    /**
+     * Iterator allowing to iterate over 2-dimensional band data.
+     * 
+     * @author Martin Pecka
+     * @param <T> Type of the data to iterate over.
+     */
+    protected abstract class AbstractNumberIterator<T extends Number> extends AbstractIterator<T>
     {
-        protected final int width = band.getRasterWidth(), height = band.getRasterHeight();
-        protected final int size  = width * height;
-        // this setting of i and j is to load the first row of data
-        protected int       i     = 0, j = width;
+        protected final int width      = band.getRasterWidth(), height = band.getRasterHeight();
+        protected final int size       = width * height;
+        protected int       i          = 0, j = 0;
+        /** This is true whenever we need to read another row of data. */
+        protected boolean   rowChanged = true;
 
         @Override
         public boolean hasNext()
         {
-            if (height == i && j + 1 == width)
-                return false;
-            return true;
+            return (i - 1) * width + j + 1 < size;
+        }
+
+        @Override
+        public void skip(int n)
+        {
+            i += n / width;
+            j = (j + n) % width;
+            rowChanged |= (n / width > 0);
         }
     }
 
@@ -200,8 +241,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public Double next()
         {
             if (j >= buffer.length) {
-                band.getPixels(0, i++, width, 1, buffer);
                 j = 0;
+                rowChanged = true;
+            }
+            if (rowChanged) {
+                band.getPixels(0, i++, width, 1, buffer);
+                rowChanged = false;
             }
             return buffer[j++];
         }
@@ -216,8 +261,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public Float next()
         {
             if (j >= buffer.length) {
-                band.getPixels(0, i++, width, 1, buffer);
                 j = 0;
+                rowChanged = true;
+            }
+            if (rowChanged) {
+                band.getPixels(0, i++, width, 1, buffer);
+                rowChanged = false;
             }
             return buffer[j++];
         }
@@ -232,8 +281,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public Integer next()
         {
             if (j >= buffer.length) {
-                band.getPixels(0, i++, width, 1, buffer);
                 j = 0;
+                rowChanged = true;
+            }
+            if (rowChanged) {
+                band.getPixels(0, i++, width, 1, buffer);
+                rowChanged = false;
             }
             return buffer[j++];
         }
@@ -248,8 +301,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public Short next()
         {
             if (j >= buffer.length) {
-                band.getPixels(0, i++, width, 1, buffer);
                 j = 0;
+                rowChanged = true;
+            }
+            if (rowChanged) {
+                band.getPixels(0, i++, width, 1, buffer);
+                rowChanged = false;
             }
             return (short) buffer[j++];
         }
@@ -264,8 +321,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public Byte next()
         {
             if (j >= buffer.length) {
-                band.getPixels(0, i++, width, 1, buffer);
                 j = 0;
+                rowChanged = true;
+            }
+            if (rowChanged) {
+                band.getPixels(0, i++, width, 1, buffer);
+                rowChanged = false;
             }
             return (byte) buffer[j++];
         }
@@ -294,6 +355,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             return new DoubleType(it.next(), precision);
         }
 
+        @Override
+        public void skip(int n)
+        {
+            it.skip(n);
+        }
+
     }
 
     private class FloatNumericTypeIterator extends AbstractIterator<FloatType>
@@ -318,6 +385,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             return new FloatType(it.next(), precision);
         }
 
+        @Override
+        public void skip(int n)
+        {
+            it.skip(n);
+        }
+
     }
 
     private class IntegerNumericTypeIterator extends AbstractIterator<IntType>
@@ -334,6 +407,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public IntType next()
         {
             return new IntType(it.next());
+        }
+
+        @Override
+        public void skip(int n)
+        {
+            it.skip(n);
         }
 
     }
@@ -354,6 +433,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             return new ShortType(it.next());
         }
 
+        @Override
+        public void skip(int n)
+        {
+            it.skip(n);
+        }
+
     }
 
     private class ByteNumericTypeIterator extends AbstractIterator<ByteType>
@@ -370,6 +455,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         public ByteType next()
         {
             return new ByteType(it.next());
+        }
+
+        @Override
+        public void skip(int n)
+        {
+            it.skip(n);
         }
 
     }
