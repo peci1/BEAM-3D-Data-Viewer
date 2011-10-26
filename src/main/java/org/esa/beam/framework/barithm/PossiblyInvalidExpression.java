@@ -339,10 +339,10 @@ public class PossiblyInvalidExpression
             final RasterDataSymbol[] refRasterDataSymbols = BandArithmetic.getRefRasterDataSymbols(term);
             for (final RasterDataSymbol refRasterDataSymbol : refRasterDataSymbols) {
                 if (commonType == ProductData.TYPE_UNDEFINED)
-                    commonType = refRasterDataSymbol.getRaster().getDataType();
+                    commonType = refRasterDataSymbol.getRaster().getGeophysicalDataType();
                 else
                     commonType = TypeUtils.getSmallestCommonType(commonType, refRasterDataSymbol.getRaster()
-                            .getDataType());
+                            .getGeophysicalDataType());
             }
         } catch (ParseException e) {
             return ProductData.TYPE_UNDEFINED;
