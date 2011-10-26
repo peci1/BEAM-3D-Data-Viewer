@@ -348,10 +348,32 @@ public class PossiblyInvalidExpressionTest
         public TestProduct()
         {
             super("testProduct", ProductData.TYPESTRING_INT32, 100, 100);
-            addBand(new Band("reflec_1", ProductData.TYPE_INT32, 100, 100));
-            addBand(new Band("reflec_2", ProductData.TYPE_INT32, 100, 100));
-            addBand(new Band("reflec_3", ProductData.TYPE_UINT32, 100, 100));
-            addBand(new Band("reflec_4", ProductData.TYPE_FLOAT64, 100, 100));
+            addBand(new TestBand("reflec_1", ProductData.TYPE_INT32, 100, 100));
+            addBand(new TestBand("reflec_2", ProductData.TYPE_INT32, 100, 100));
+            addBand(new TestBand("reflec_3", ProductData.TYPE_UINT32, 100, 100));
+            addBand(new TestBand("reflec_4", ProductData.TYPE_FLOAT64, 100, 100));
+        }
+
+    }
+
+    private class TestBand extends Band
+    {
+
+        /**
+         * @param name
+         * @param dataType
+         * @param width
+         * @param height
+         */
+        public TestBand(String name, int dataType, int width, int height)
+        {
+            super(name, dataType, width, height);
+        }
+
+        @Override
+        public int getGeophysicalDataType()
+        {
+            return getDataType();
         }
 
     }
