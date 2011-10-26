@@ -277,7 +277,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getxMin()
     {
-        return xMin;
+        return xAutodetect ? null : xMin;
     }
 
     /**
@@ -285,7 +285,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getxMax()
     {
-        return xMax;
+        return xAutodetect ? null : xMax;
     }
 
     /**
@@ -293,7 +293,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getyMin()
     {
-        return yMin;
+        return yAutodetect ? null : yMin;
     }
 
     /**
@@ -301,7 +301,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getyMax()
     {
-        return yMax;
+        return yAutodetect ? null : yMax;
     }
 
     /**
@@ -309,7 +309,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getzMin()
     {
-        return zMin;
+        return zAutodetect ? null : zMin;
     }
 
     /**
@@ -317,7 +317,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getzMax()
     {
-        return zMax;
+        return zAutodetect ? null : zMax;
     }
 
     /**
@@ -325,7 +325,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getwMin()
     {
-        return wMin;
+        return wAutodetect ? null : wMin;
     }
 
     /**
@@ -333,7 +333,7 @@ public class BandSelectionDialog extends ModalDialog
      */
     public Double getwMax()
     {
-        return wMax;
+        return wAutodetect ? null : wMax;
     }
 
     @Override
@@ -402,8 +402,12 @@ public class BandSelectionDialog extends ModalDialog
      */
     protected void setBandProperties(VirtualBand band, String validMaskExpression)
     {
-        band.setValidPixelExpression("(" + validMaskExpression + ") & (" + maskExpression + ")");
+        if (!maskExpression.isEmpty())
+            band.setValidPixelExpression("(" + validMaskExpression + ") & (" + maskExpression.getExpression() + ")");
+        else
+            band.setValidPixelExpression(validMaskExpression);
         band.setModified(true);
+        targetProduct.addBand(band);
     }
 
     @Override
