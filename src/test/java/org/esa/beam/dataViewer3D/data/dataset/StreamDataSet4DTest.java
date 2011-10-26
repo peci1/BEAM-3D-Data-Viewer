@@ -13,6 +13,7 @@ import static org.junit.Assert.fail;
 import static org.junit.matchers.JUnitMatchers.either;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -36,7 +37,7 @@ public class StreamDataSet4DTest
 
     /**
      * Test method for
-     * {@link org.esa.beam.dataViewer3D.data.dataset.StreamDataSet4D#StreamDataSet4D(DataSource, DataSource, DataSource, DataSource, org.esa.beam.dataViewer3D.data.dataset.StreamDataSet4D.PointFactory, LinkedHashMap, Number, Number, Number, Number, Number, Number, Number, Number)}
+     * {@link org.esa.beam.dataViewer3D.data.dataset.StreamDataSet4D#StreamDataSet4D(DataSource, DataSource, DataSource, DataSource, org.esa.beam.dataViewer3D.data.dataset.StreamDataSet4D.PointFactory, LinkedHashMap, List, Number, Number, Number, Number, Number, Number, Number, Number)}
      * .
      */
     @Test
@@ -45,22 +46,22 @@ public class StreamDataSet4DTest
         assertNotNull(new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(10),
                 Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10),
                 StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(10),
-                Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE, Integer.MAX_VALUE,
-                Double.MAX_VALUE, Float.POSITIVE_INFINITY));
+                getUsedPointsIndices(10), Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE,
+                Integer.MAX_VALUE, Double.MAX_VALUE, Float.POSITIVE_INFINITY));
         assertNotNull(new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(1),
                 Common.getTestDataSourceY(1), Common.getTestDataSourceZ(1), Common.getTestDataSourceW(1),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(1), (byte) 5,
-                6, 6.5, 6.6f, (byte) 5, 6, 6.5, 6.6f));
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(1),
+                getUsedPointsIndices(1), (byte) 5, 6, 6.5, 6.6f, (byte) 5, 6, 6.5, 6.6f));
         assertNotNull(new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                 Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f));
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f));
 
         try {
             new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                     Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
                     StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
-                    (byte) 5, 6, 6.5, 6.6f, (byte) 0, 0, 0d, 0f);
+                    getUsedPointsIndices(2), (byte) 5, 6, 6.5, 6.6f, (byte) 0, 0, 0d, 0f);
             fail("Allowed to create data set with max < min");
         } catch (IllegalArgumentException e) {}
 
@@ -68,7 +69,7 @@ public class StreamDataSet4DTest
             new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                     Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
                     StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
-                    (byte) 0, 0, 6.5, 6.6f, (byte) 5, 6, 0d, 6.6f);
+                    getUsedPointsIndices(2), (byte) 0, 0, 6.5, 6.6f, (byte) 5, 6, 0d, 6.6f);
             fail("Allowed to create data set with max < min");
         } catch (IllegalArgumentException e) {}
 
@@ -76,7 +77,7 @@ public class StreamDataSet4DTest
             new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(1),
                     Common.getTestDataSourceY(1), Common.getTestDataSourceZ(1), Common.getTestDataSourceW(1),
                     StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
-                    (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                    getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
             fail("Allowed to create data set with histogram longer than test data");
         } catch (IllegalArgumentException e) {}
 
@@ -84,7 +85,7 @@ public class StreamDataSet4DTest
             new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(0),
                     Common.getTestDataSourceY(0), Common.getTestDataSourceZ(0), Common.getTestDataSourceW(0),
                     StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(0),
-                    (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                    getUsedPointsIndices(0), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
             fail("Allowed to create data set of zero size");
         } catch (IllegalArgumentException e) {}
 
@@ -92,7 +93,7 @@ public class StreamDataSet4DTest
             new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                     Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
                     StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(0),
-                    (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                    getUsedPointsIndices(0), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
             fail("Allowed to create data set of zero size");
         } catch (IllegalArgumentException e) {}
 
@@ -100,7 +101,7 @@ public class StreamDataSet4DTest
             new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(1),
                     Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
                     StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
-                    (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                    getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
             fail("Allowed to create data set from sources with different sizes");
         } catch (IllegalArgumentException e) {}
     }
@@ -120,8 +121,8 @@ public class StreamDataSet4DTest
                 Common.getTestDataSourceX(10), Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10),
                 Common.getTestDataSourceW(10),
                 StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(10),
-                Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE, Integer.MAX_VALUE,
-                Double.MAX_VALUE, Float.POSITIVE_INFINITY);
+                getUsedPointsIndices(10), Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE,
+                Integer.MAX_VALUE, Double.MAX_VALUE, Float.POSITIVE_INFINITY);
         assertEquals("Wrong dataset minimum returned", (Byte) Byte.MIN_VALUE, dataSet.getMinX());
         assertEquals("Wrong dataset minimum returned", (Integer) Integer.MIN_VALUE, dataSet.getMinY());
         assertEquals("Wrong dataset minimum returned", (Double) (-10d), dataSet.getMinZ());
@@ -131,8 +132,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                 Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         assertEquals("Wrong dataset minimum returned", (Byte) (byte) 0, dataSet.getMinX());
         assertEquals("Wrong dataset minimum returned", (Integer) 0, dataSet.getMinY());
         assertEquals("Wrong dataset minimum returned", (Double) 0d, dataSet.getMinZ());
@@ -153,29 +154,29 @@ public class StreamDataSet4DTest
                 new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(10), Common
                         .getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10),
                         StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(10),
-                        Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE, Integer.MAX_VALUE,
-                        Double.MAX_VALUE, Float.POSITIVE_INFINITY).size());
+                        getUsedPointsIndices(10), Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE,
+                        Byte.MAX_VALUE, Integer.MAX_VALUE, Double.MAX_VALUE, Float.POSITIVE_INFINITY).size());
         assertEquals(
                 "Wrong dataset size returned",
                 1,
                 new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(1), Common
                         .getTestDataSourceY(1), Common.getTestDataSourceZ(1), Common.getTestDataSourceW(1),
                         StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(1),
-                        (byte) 5, 6, 6.5, 6.6f, (byte) 5, 6, 6.5, 6.6f).size());
+                        getUsedPointsIndices(1), (byte) 5, 6, 6.5, 6.6f, (byte) 5, 6, 6.5, 6.6f).size());
         assertEquals(
                 "Wrong dataset size returned",
                 2,
                 new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2), Common
                         .getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
                         StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
-                        (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f).size());
+                        getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f).size());
         assertEquals(
                 "Wrong dataset size returned",
                 1,
                 new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2), Common
                         .getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
                         StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(1),
-                        (byte) 5, 6, 6.5, 6.6f, (byte) 5, 6, 6.5, 6.6f).size());
+                        getUsedPointsIndices(1), (byte) 5, 6, 6.5, 6.6f, (byte) 5, 6, 6.5, 6.6f).size());
     }
 
     /**
@@ -188,8 +189,8 @@ public class StreamDataSet4DTest
                 Common.getTestDataSourceX(10), Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10),
                 Common.getTestDataSourceW(10),
                 StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(10),
-                Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE, Integer.MAX_VALUE,
-                Double.MAX_VALUE, Float.POSITIVE_INFINITY);
+                getUsedPointsIndices(10), Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE,
+                Integer.MAX_VALUE, Double.MAX_VALUE, Float.POSITIVE_INFINITY);
         int i = 0;
         for (DataPoint p : dataSet) {
             i++;
@@ -199,8 +200,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                 Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         i = 0;
         for (DataPoint p : dataSet) {
             i++;
@@ -210,8 +211,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(10),
                 Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         i = 0;
         for (DataPoint p : dataSet) {
             i++;
@@ -230,8 +231,8 @@ public class StreamDataSet4DTest
                 Common.getTestDataSourceX(10), Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10),
                 Common.getTestDataSourceW(10),
                 StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(10),
-                Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE, Integer.MAX_VALUE,
-                Double.MAX_VALUE, Float.POSITIVE_INFINITY);
+                getUsedPointsIndices(10), Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE,
+                Integer.MAX_VALUE, Double.MAX_VALUE, Float.POSITIVE_INFINITY);
         Iterator<DataPoint> it = dataSet.iterator();
         for (Iterator<? extends DataPoint4D<?, ?, ?, ?>> pointIt = dataSet.pointIterator(); pointIt.hasNext();) {
             assertTrue("Point iterator returns more elements than the normal one", it.hasNext());
@@ -241,8 +242,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                 Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         it = dataSet.iterator();
         for (Iterator<? extends DataPoint4D<?, ?, ?, ?>> pointIt = dataSet.pointIterator(); pointIt.hasNext();) {
             assertTrue("Point iterator returns more elements than the normal one", it.hasNext());
@@ -252,8 +253,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(10),
                 Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         it = dataSet.iterator();
         for (Iterator<? extends DataPoint4D<?, ?, ?, ?>> pointIt = dataSet.pointIterator(); pointIt.hasNext();) {
             assertTrue("Point iterator returns more elements than the normal one", it.hasNext());
@@ -272,8 +273,8 @@ public class StreamDataSet4DTest
                 Common.getTestDataSourceX(10), Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10),
                 Common.getTestDataSourceW(10),
                 StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(10),
-                Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE, Integer.MAX_VALUE,
-                Double.MAX_VALUE, Float.POSITIVE_INFINITY);
+                getUsedPointsIndices(10), Byte.MIN_VALUE, Integer.MIN_VALUE, -10d, Float.MIN_VALUE, Byte.MAX_VALUE,
+                Integer.MAX_VALUE, Double.MAX_VALUE, Float.POSITIVE_INFINITY);
         Iterator<DataPoint> it = dataSet.iterator();
         for (Iterator<Integer> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
             assertTrue("Histogram iterator returns more elements than the normal one", it.hasNext());
@@ -286,8 +287,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(2),
                 Common.getTestDataSourceY(2), Common.getTestDataSourceZ(2), Common.getTestDataSourceW(2),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         it = dataSet.iterator();
         for (Iterator<Integer> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
             assertTrue("Histogram iterator returns more elements than the normal one", it.hasNext());
@@ -300,8 +301,8 @@ public class StreamDataSet4DTest
 
         dataSet = new StreamDataSet4D<Byte, Integer, Double, Float>(Common.getTestDataSourceX(10),
                 Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10),
-                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2), (byte) 0,
-                0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
+                StreamDataSet4D.<Byte, Integer, Double, Float>createDefaultPointFactory(), getUsedPoints(2),
+                getUsedPointsIndices(2), (byte) 0, 0, 0d, 0f, (byte) 5, 6, 6.5, 6.6f);
         it = dataSet.iterator();
         for (Iterator<Integer> histIt = dataSet.histogramIterator(); histIt.hasNext();) {
             assertTrue("Histogram iterator returns more elements than the normal one", it.hasNext());
@@ -395,6 +396,17 @@ public class StreamDataSet4DTest
         histIt = dataSet.histogramIterator();
         while (histIt.hasNext())
             assertThat("Wrong histogram count reported", histIt.next(), either(is(1)).or(is(2)).or(is(3)).or(is(4)));
+    }
+
+    private List<Integer> getUsedPointsIndices(final int size)
+    {
+        if (size == 0)
+            return Arrays.asList(new Integer[0]);
+
+        if (size > 10 || size < 1)
+            throw new IllegalArgumentException();
+
+        return Arrays.asList(new Integer[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }).subList(0, size);
     }
 
     private LinkedHashMap<Integer, Integer> getUsedPoints(final int size)
