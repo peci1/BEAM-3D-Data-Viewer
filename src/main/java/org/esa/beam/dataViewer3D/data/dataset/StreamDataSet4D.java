@@ -126,7 +126,7 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
             @Override
             public boolean hasNext()
             {
-                return dataIterator.hasNext();
+                return dataIterator.hasNext() && xIt.hasNext() && yIt.hasNext() && zIt.hasNext() && wIt.hasNext();
             }
 
             @Override
@@ -293,7 +293,7 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
             NumericType<Z> z;
             NumericType<W> w;
 
-            while (xIt.hasNext()) {
+            while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext() && wIt.hasNext()) {
                 x = xIt.next();
                 y = yIt.next();
                 z = zIt.next();
