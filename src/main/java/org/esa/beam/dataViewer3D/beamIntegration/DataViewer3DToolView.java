@@ -10,7 +10,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
@@ -23,12 +22,7 @@ import org.esa.beam.dataViewer3D.data.dataset.AbstractDataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
-import org.esa.beam.dataViewer3D.data.source.DataSource;
-import org.esa.beam.dataViewer3D.data.source.RandomDataSource;
-import org.esa.beam.dataViewer3D.data.type.ByteType;
-import org.esa.beam.dataViewer3D.data.type.DoubleType;
-import org.esa.beam.dataViewer3D.data.type.FloatType;
-import org.esa.beam.dataViewer3D.data.type.NumericType;
+import org.esa.beam.dataViewer3D.data.source.BandDataSource;
 import org.esa.beam.dataViewer3D.gui.DataViewer;
 import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
 import org.esa.beam.framework.datamodel.Band;
@@ -54,6 +48,8 @@ public class DataViewer3DToolView extends AbstractToolView
     protected final List<Band> involvedBands  = new LinkedList<Band>();
     /** The expression denoting the mask for valid pixels to be read. */
     protected String           maskExpression = "";
+    /** The maximum number of displayed points. */
+    protected Integer          maxPoints      = null;
     /** The data viewer used to display the data. */
     protected final DataViewer dataViewer     = createDataViewer();
 
@@ -168,7 +164,18 @@ public class DataViewer3DToolView extends AbstractToolView
         if (bandW != null)
             involvedBands.add(bandW);
 
-        dataViewer.setDataSet(createDataSet()); // TODO dev stuff
+        DataSet dataSet;
+        if (bandW == null) {
+            // TODO allow adjusting the precision
+            dataSet = AbstractDataSet.createFromDataSources(maxPoints, BandDataSource.createForBand(bandX, 10),
+                    BandDataSource.createForBand(bandY, 10), BandDataSource.createForBand(bandZ, 10));
+        } else {
+            // TODO allow adjusting the precision
+            dataSet = AbstractDataSet.createFromDataSources(maxPoints, BandDataSource.createForBand(bandX, 10),
+                    BandDataSource.createForBand(bandY, 10), BandDataSource.createForBand(bandZ, 10),
+                    BandDataSource.createForBand(bandW, 10));
+        }
+        dataViewer.setDataSet(dataSet);
     }
 
     /**
@@ -255,63 +262,6 @@ public class DataViewer3DToolView extends AbstractToolView
     protected DataViewer createDataViewerImpl()
     {
         return new JOGLDataViewer();
-    }
-
-    // TODO remove, dev only
-    private DataSet createDataSet()
-    {
-        // final int size = Integer.MAX_VALUE / 2000;
-        final int size = 20000;
-
-        DataSource<Float> src1 = new RandomDataSource<Float>(size, -256f, 256f) {
-            Random random = new Random();
-
-            @Override
-            protected Float getRandomValue()
-            {
-                return (float) (random.nextDouble() * (max - min) + min);
-            }
-
-            @Override
-            protected NumericType<Float> getNumericType(Float number)
-            {
-                return new FloatType(number, 10);
-            }
-        };
-
-        DataSource<Double> src2 = new RandomDataSource<Double>(size, 0d, 256d) {
-            Random random = new Random();
-
-            @Override
-            protected Double getRandomValue()
-            {
-                return random.nextDouble() * (max - min) + min;
-            }
-
-            @Override
-            protected NumericType<Double> getNumericType(Double number)
-            {
-                return new DoubleType(number, 2);
-            }
-        };
-
-        DataSource<Byte> src3 = new RandomDataSource<Byte>(size, (byte) 0, (byte) 20) {
-            Random random = new Random();
-
-            @Override
-            protected Byte getRandomValue()
-            {
-                return ((Long) Math.round(random.nextDouble() * (max - min) + min)).byteValue();
-            }
-
-            @Override
-            protected NumericType<Byte> getNumericType(Byte number)
-            {
-                return new ByteType(number);
-            }
-        };
-
-        return AbstractDataSet.createFromDataSources(20000, src1, src2, src3);
     }
 
     /**
