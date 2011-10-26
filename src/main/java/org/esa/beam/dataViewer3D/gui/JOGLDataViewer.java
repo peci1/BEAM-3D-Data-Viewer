@@ -29,8 +29,6 @@ import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.grid.Grid;
-import org.esa.beam.dataViewer3D.data.point.DataPoint3D;
-import org.esa.beam.dataViewer3D.data.type.NumericType;
 import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
 
 import com.sun.opengl.util.j2d.TextRenderer;
@@ -249,25 +247,30 @@ public class JOGLDataViewer extends JPanel implements DataViewer
              */
             private void drawDataset(GL gl)
             {
-                float maxDistance = (float) Math.sqrt(256 * 256 + 256 * 256 + 20 * 20); // TODO dev stuff
-
                 gl.glBegin(GL.GL_POINTS);
                 if (dataSet instanceof DataSet3D<?, ?, ?>) {
-                    DataSet3D<?, ?, ?> dataSet3D = (DataSet3D<?, ?, ?>) dataSet;
-                    for (Iterator<? extends DataPoint3D<? extends NumericType<?>, ? extends NumericType<?>, ? extends NumericType<?>>> it = dataSet3D
-                            .pointIterator(); it.hasNext();) {
-                        DataPoint3D<? extends NumericType<?>, ? extends NumericType<?>, ? extends NumericType<?>> point = it
-                                .next();
+                    @SuppressWarnings("unchecked")
+                    final DataSet3D<? extends Number, ? extends Number, ? extends Number> dataSet3D = (DataSet3D<? extends Number, ? extends Number, ? extends Number>) dataSet;
+
+                    // TODO dev stuff
+                    float maxDistance = (float) Math.sqrt(Math.pow(dataSet3D.getMaxX().doubleValue()
+                            - dataSet3D.getMinX().doubleValue(), 2)
+                            + Math.pow(dataSet3D.getMaxY().doubleValue() - dataSet3D.getMinY().doubleValue(), 2)
+                            + Math.pow(dataSet3D.getMaxZ().doubleValue() - dataSet3D.getMinZ().doubleValue(), 2));
+
+                    final Iterator<? extends Number> xIt = dataSet3D.xIterator();
+                    final Iterator<? extends Number> yIt = dataSet3D.yIterator();
+                    final Iterator<? extends Number> zIt = dataSet3D.zIterator();
+                    double x, y, z;
+                    while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext()) {
+                        x = xIt.next().doubleValue();
+                        y = yIt.next().doubleValue();
+                        z = zIt.next().doubleValue();
                         // TODO dev stuff
-                        float color = (float) Math.sqrt(Math.pow(point.getX().getNumber().doubleValue(), 2)
-                                + Math.pow(point.getY().getNumber().doubleValue(), 2)
-                                + Math.pow(point.getZ().getNumber().doubleValue(), 2))
-                                / maxDistance;
+                        float color = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2)) / maxDistance;
                         // TODO dev stuff
-                        gl.glColor3f(point.getX().getNumber().floatValue() / 256f, point.getY().getNumber()
-                                .floatValue() / 256f, color);
-                        gl.glVertex3d(point.getX().getNumber().doubleValue(), point.getY().getNumber().doubleValue(),
-                                point.getZ().getNumber().doubleValue());
+                        gl.glColor3f(((color * 255 * 11) % 256) / 255f, ((color * 255 * 5) % 256) / 255f, color);
+                        gl.glVertex3d(x, y, z);
                     }
                 } else {
 
