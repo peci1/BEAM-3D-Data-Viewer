@@ -99,6 +99,54 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
     }
 
     @Override
+    public Iterator<X> xIterator()
+    {
+        return new SingleAxisIterator<X>() {
+            @Override
+            public X next()
+            {
+                return data[i++].getX().getNumber();
+            }
+        };
+    }
+
+    @Override
+    public Iterator<Y> yIterator()
+    {
+        return new SingleAxisIterator<Y>() {
+            @Override
+            public Y next()
+            {
+                return data[i++].getY().getNumber();
+            }
+        };
+    }
+
+    @Override
+    public Iterator<Z> zIterator()
+    {
+        return new SingleAxisIterator<Z>() {
+            @Override
+            public Z next()
+            {
+                return data[i++].getZ().getNumber();
+            }
+        };
+    }
+
+    @Override
+    public Iterator<W> wIterator()
+    {
+        return new SingleAxisIterator<W>() {
+            @Override
+            public W next()
+            {
+                return data[i++].getW().getNumber();
+            }
+        };
+    }
+
+    @Override
     protected DataPoint[] getData()
     {
         return data;

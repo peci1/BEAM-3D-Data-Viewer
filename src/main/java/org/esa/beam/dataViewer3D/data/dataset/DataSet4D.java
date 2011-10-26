@@ -29,6 +29,34 @@ public interface DataSet4D<X extends Number, Y extends Number, Z extends Number,
     Iterator<DataPoint4D<NumericType<X>, NumericType<Y>, NumericType<Z>, NumericType<W>>> pointIterator();
 
     /**
+     * Iterator over x values.
+     * 
+     * @return The iterator.
+     */
+    Iterator<X> xIterator();
+
+    /**
+     * Iterator over y values.
+     * 
+     * @return The iterator.
+     */
+    Iterator<Y> yIterator();
+
+    /**
+     * Iterator over z values.
+     * 
+     * @return The iterator.
+     */
+    Iterator<Z> zIterator();
+
+    /**
+     * Iterator over w values.
+     * 
+     * @return The iterator.
+     */
+    Iterator<W> wIterator();
+
+    /**
      * Return the minimum x-value in this set.
      * 
      * @return The minimum x-value in this set.

@@ -5,12 +5,15 @@ package org.esa.beam.dataViewer3D.data.dataset;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.esa.beam.dataViewer3D.data.point.DataPoint;
 import org.esa.beam.dataViewer3D.data.point.DataPoint3D;
 import org.esa.beam.dataViewer3D.data.point.SimpleDataPoint3D;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
+import org.esa.beam.util.SkippableIterator;
 
 /**
  * A stream-backed 3D data set.
@@ -51,6 +54,7 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
      * @param z The source of z values.
      * @param pointFactory The factory for creating points from single coordinates.
      * @param usedPoints Keys are hashes of the points, values are counts of points with the same hash.
+     * @param usedPointsIndices Indices to the data source's iterator where all the used points are located.
      * @param minX Minimum x value.
      * @param minY Minimum y value.
      * @param minZ Minimum z value.
@@ -62,9 +66,10 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
      *             usedPoints is longer than x or y or z; if some max is lower than the min for a coordinate.
      */
     protected StreamDataSet3D(DataSource<X> x, DataSource<Y> y, DataSource<Z> z, PointFactory<X, Y, Z> pointFactory,
-            LinkedHashMap<Integer, Integer> usedPoints, X minX, Y minY, Z minZ, X maxX, Y maxY, Z maxZ)
+            LinkedHashMap<Integer, Integer> usedPoints, List<Integer> usedPointsIndices, X minX, Y minY, Z minZ,
+            X maxX, Y maxY, Z maxZ)
     {
-        super(usedPoints);
+        super(usedPoints, usedPointsIndices);
 
         if (x.size() != y.size() || y.size() != z.size())
             throw new IllegalArgumentException(getClass() + ": Cannot use data sources of different sizes.");
@@ -99,35 +104,67 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
     {
         return new Iterator<DataPoint3D<NumericType<X>, NumericType<Y>, NumericType<Z>>>() {
 
-            /** Iterator of the used points' key set, which defines hashes of the points to expose. */
-            private Iterator<Integer>        dataIterator = usedPoints.keySet().iterator();
+            /** Iterator of the used points' indices in their data sources. */
+            private final Iterator<Integer>        usedPointsIndices = StreamDataSet3D.this.usedPointsIndices
+                                                                             .iterator();
             /** Iterator of the source for x values. */
-            private Iterator<NumericType<X>> xIt          = xSource.numericTypeIterator();
+            private final Iterator<NumericType<X>> xIt               = xSource.numericTypeIterator();
             /** Iterator of the source for y values. */
-            private Iterator<NumericType<Y>> yIt          = ySource.numericTypeIterator();
+            private final Iterator<NumericType<Y>> yIt               = ySource.numericTypeIterator();
             /** Iterator of the source for z values. */
-            private Iterator<NumericType<Z>> zIt          = zSource.numericTypeIterator();
+            private final Iterator<NumericType<Z>> zIt               = zSource.numericTypeIterator();
+            /** Wheteher the iterators are skippable (because instanceof may be slow). */
+            private final boolean                  xSkippable        = (xIt instanceof SkippableIterator<?>),
+                    ySkippable = (yIt instanceof SkippableIterator<?>),
+                    zSkippable = (zIt instanceof SkippableIterator<?>);
+            /** The index of the last returned value in its datasource. */
+            private int                            lastIndex         = -1;
 
             @Override
             public boolean hasNext()
             {
-                return dataIterator.hasNext() && xIt.hasNext() && yIt.hasNext() && zIt.hasNext();
+                return usedPointsIndices.hasNext() && xIt.hasNext() && yIt.hasNext() && zIt.hasNext();
             }
 
             @Override
             public DataPoint3D<NumericType<X>, NumericType<Y>, NumericType<Z>> next()
             {
-                int hash;
-                DataPoint3D<NumericType<X>, NumericType<Y>, NumericType<Z>> point;
+                NumericType<X> x = null;
+                NumericType<Y> y = null;
+                NumericType<Z> z = null;
 
-                int nextPointHash = dataIterator.next();
+                final int oldIndex = lastIndex;
+                lastIndex = usedPointsIndices.next();
+                final int difference = lastIndex - oldIndex;
 
-                do {
-                    point = pointFactory.getPoint(xIt.next(), yIt.next(), zIt.next());
-                    hash = point.hashCode();
-                } while (hash != nextPointHash);
+                if (!xSkippable) {
+                    for (int i = 0; i < difference; i++)
+                        x = xIt.next();
+                } else {
+                    if (difference > 1)
+                        ((SkippableIterator<?>) xIt).skip(difference - 1);
+                    x = xIt.next();
+                }
 
-                return point;
+                if (!ySkippable) {
+                    for (int i = 0; i < difference; i++)
+                        y = yIt.next();
+                } else {
+                    if (difference > 1)
+                        ((SkippableIterator<?>) yIt).skip(difference - 1);
+                    y = yIt.next();
+                }
+
+                if (!zSkippable) {
+                    for (int i = 0; i < difference; i++)
+                        z = zIt.next();
+                } else {
+                    if (difference > 1)
+                        ((SkippableIterator<?>) zIt).skip(difference - 1);
+                    z = zIt.next();
+                }
+
+                return pointFactory.getPoint(x, y, z);
             }
 
             @Override
@@ -136,6 +173,24 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    @Override
+    public Iterator<X> xIterator()
+    {
+        return singleAxisIterator(xSource);
+    }
+
+    @Override
+    public Iterator<Y> yIterator()
+    {
+        return singleAxisIterator(ySource);
+    }
+
+    @Override
+    public Iterator<Z> zIterator()
+    {
+        return singleAxisIterator(zSource);
     }
 
     @Override
@@ -243,8 +298,10 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
                 throw new IllegalArgumentException(getClass()
                         + ": You must use data sources of the same size in the builder.");
 
-            LinkedHashMap<Integer, Integer> usedPoints = new LinkedHashMap<Integer, Integer>(
+            final LinkedHashMap<Integer, Integer> usedPoints = new LinkedHashMap<Integer, Integer>(
                     (maxPoints != null && maxPoints < xSource.size()) ? maxPoints : xSource.size());
+            final List<Integer> usedPointsIndices = new LinkedList<Integer>();
+
             X minX = null, maxX = null;
             Y minY = null, maxY = null;
             Z minZ = null, maxZ = null;
@@ -259,7 +316,10 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
             NumericType<Y> y;
             NumericType<Z> z;
 
+            int i = -1;
             while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext()) {
+                i++;
+
                 x = xIt.next();
                 y = yIt.next();
                 z = zIt.next();
@@ -291,11 +351,12 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
                     usedPoints.put(hash, usedPoints.get(hash) + 1);
                 } else {
                     usedPoints.put(hash, 1);
+                    usedPointsIndices.add(i);
                 }
             }
 
-            return new StreamDataSet3D<X, Y, Z>(xSource, ySource, zSource, pointFactory, usedPoints, minX, minY, minZ,
-                    maxX, maxY, maxZ);
+            return new StreamDataSet3D<X, Y, Z>(xSource, ySource, zSource, pointFactory, usedPoints, usedPointsIndices,
+                    minX, minY, minZ, maxX, maxY, maxZ);
         }
 
         /**

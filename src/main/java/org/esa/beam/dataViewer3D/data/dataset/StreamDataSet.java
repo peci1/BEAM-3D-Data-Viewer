@@ -5,9 +5,12 @@ package org.esa.beam.dataViewer3D.data.dataset;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.esa.beam.dataViewer3D.data.point.DataPoint;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
+import org.esa.beam.util.Guardian;
+import org.esa.beam.util.SkippableIterator;
 
 /**
  * A stream-backed data set. Doesn't duplicate the data from the input sources.
@@ -28,14 +31,19 @@ abstract class StreamDataSet<P extends DataPoint> extends AbstractDataSet
     /** Keys are hashes of the points, values are counts of points with the same hash. */
     protected final LinkedHashMap<Integer, Integer> usedPoints;
 
+    /** Indices to the data source's iterator where all the used points are located. */
+    protected final List<Integer>                   usedPointsIndices;
+
     /**
      * A stream-backed data set.
      * 
      * @param usedPoints Keys are hashes of the points, values are counts of points with the same hash.
+     * @param usedPointsIndices Indices to the data source's iterator where all the used points are located.
      */
-    protected StreamDataSet(LinkedHashMap<Integer, Integer> usedPoints)
+    protected StreamDataSet(LinkedHashMap<Integer, Integer> usedPoints, List<Integer> usedPointsIndices)
     {
         this.usedPoints = usedPoints;
+        this.usedPointsIndices = usedPointsIndices;
     }
 
     @Override
@@ -77,6 +85,20 @@ abstract class StreamDataSet<P extends DataPoint> extends AbstractDataSet
     }
 
     /**
+     * Return an iterator over one axis' data.
+     * 
+     * @param source The source of the axis' data.
+     * @return The iterator.
+     */
+    protected <N extends Number> Iterator<N> singleAxisIterator(final DataSource<N> source)
+    {
+        if (source.iterator() instanceof SkippableIterator<?>)
+            return new SingleAxisSkippingIterator<N>(source);
+        else
+            return new SingleAxisIterator<N>(source);
+    }
+
+    /**
      * Create a new 3D data set from the given data sources.
      * 
      * @param maxPoints The maximum number of data points in the resulting set (<code>null</code> means the count is
@@ -109,5 +131,77 @@ abstract class StreamDataSet<P extends DataPoint> extends AbstractDataSet
             Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
     {
         return StreamDataSet4D.createFromDataSources(maxPoints, x, y, z, w);
+    }
+
+    /**
+     * A single axis iterator which provides an efficient way to iterate over data sources with skippable iterators.
+     * 
+     * @author Martin Pecka
+     * @param <N> Type of the data.
+     */
+    protected class SingleAxisSkippingIterator<N extends Number> extends SingleAxisIterator<N>
+    {
+        public SingleAxisSkippingIterator(final DataSource<N> source)
+        {
+            super(source);
+            Guardian.assertTrue("not a skippable iterator", sourceIt instanceof SkippableIterator<?>);
+        }
+
+        @Override
+        public N next()
+        {
+            final int oldIndex = lastIndex;
+            lastIndex = indices.next();
+            final int difference = lastIndex - oldIndex;
+
+            if (difference > 1)
+                ((SkippableIterator<?>) sourceIt).skip(difference - 1);
+
+            return sourceIt.next();
+        }
+    }
+
+    /**
+     * Iterator of a single axis' data.
+     * 
+     * @author Martin Pecka
+     * @param <N> Type of the data.
+     */
+    protected class SingleAxisIterator<N extends Number> implements Iterator<N>
+    {
+        protected final Iterator<N>       sourceIt;
+        protected final Iterator<Integer> indices   = usedPointsIndices.iterator();
+        protected int                     lastIndex = -1;
+
+        public SingleAxisIterator(final DataSource<N> source)
+        {
+            sourceIt = source.iterator();
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return indices.hasNext();
+        }
+
+        @Override
+        public N next()
+        {
+            final int oldIndex = lastIndex;
+            lastIndex = indices.next();
+            final int difference = lastIndex - oldIndex;
+            N value = null;
+
+            for (int i = 0; i < difference; i++) {
+                value = sourceIt.next();
+            }
+            return value;
+        }
+
+        @Override
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
     }
 }

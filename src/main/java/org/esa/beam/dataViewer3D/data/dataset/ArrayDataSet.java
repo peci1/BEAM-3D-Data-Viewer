@@ -6,6 +6,8 @@ package org.esa.beam.dataViewer3D.data.dataset;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import javax.help.UnsupportedOperationException;
+
 import org.esa.beam.dataViewer3D.data.point.DataPoint;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
 
@@ -105,6 +107,30 @@ public abstract class ArrayDataSet extends AbstractDataSet
         setupBuilderFromDataSources(builder, x, y, z, w);
 
         return builder.getResult();
+    }
+
+    /**
+     * Iterator over a single axis' data.
+     * 
+     * @author Martin Pecka
+     * @param <N> Type of the axis' data.
+     */
+    protected abstract class SingleAxisIterator<N extends Number> implements Iterator<N>
+    {
+        protected int i = 0;
+
+        @Override
+        public boolean hasNext()
+        {
+            return i + 1 < size();
+        }
+
+        @Override
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
+
     }
 
 }
