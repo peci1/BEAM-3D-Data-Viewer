@@ -54,19 +54,19 @@
 		<dependency>
 			<groupId>org.esa.beam</groupId>
 			<artifactId>beam-core</artifactId>
-			<version>4.9-SNAPSHOT</version>
+			<version>4.9</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.esa.beam</groupId>
 			<artifactId>beam-visat</artifactId>
-			<version>4.9-SNAPSHOT</version>
+			<version>4.9</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.esa.beam</groupId>
 			<artifactId>beam-gpf</artifactId>
-			<version>4.9-SNAPSHOT</version>
+			<version>4.9</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
