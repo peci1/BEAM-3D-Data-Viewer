@@ -288,6 +288,8 @@ public class DataViewer3DToolView extends AbstractToolView
                     .getSelectedProduct(), products, involvedBands, maskExpression, "");
             bandSelectionDialog.show();
 
+            maxPoints = bandSelectionDialog.getMaxPoints();
+
             List<Band> bands = bandSelectionDialog.getBands();
             if (bands != null && bands.size() > 0) {
                 if (bands.size() == 3) {
