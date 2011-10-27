@@ -6,6 +6,7 @@ package org.esa.beam.dataViewer3D.gui;
 import jahuwaldt.gl.Matrix;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -24,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.esa.beam.dataViewer3D.data.axis.Axis;
+import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
@@ -154,7 +156,7 @@ public class JOGLDataViewer extends JPanel implements DataViewer
 
                 // the drawing methods
                 drawGrid(gl, coordinatesSystem.getGrid());
-                drawDataset(gl);
+                drawDataset(gl, coordinatesSystem.getColorProvider());
                 drawAces(gl, glu, aces);
             }
 
@@ -248,15 +250,15 @@ public class JOGLDataViewer extends JPanel implements DataViewer
              * Draw points from the data set.
              * 
              * @param gl The {@link javax.media.opengl.GL} instance to use.
+             * @param colorProvider The color provider for coloring data points.
              */
-            private void drawDataset(GL gl)
+            private void drawDataset(GL gl, ColorProvider colorProvider)
             {
                 gl.glBegin(GL.GL_POINTS);
                 if (dataSet instanceof DataSet3D<?, ?, ?>) {
                     @SuppressWarnings("unchecked")
                     final DataSet3D<? extends Number, ? extends Number, ? extends Number> dataSet3D = (DataSet3D<? extends Number, ? extends Number, ? extends Number>) dataSet;
 
-                    // TODO dev stuff
                     float maxDistance = (float) Math.sqrt(Math.pow(dataSet3D.getMaxX().doubleValue()
                             - dataSet3D.getMinX().doubleValue(), 2)
                             + Math.pow(dataSet3D.getMaxY().doubleValue() - dataSet3D.getMinY().doubleValue(), 2)
@@ -270,14 +272,32 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                         x = xIt.next().doubleValue();
                         y = yIt.next().doubleValue();
                         z = zIt.next().doubleValue();
-                        // TODO dev stuff
-                        float color = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2)) / maxDistance;
-                        // TODO dev stuff
-                        gl.glColor3f(((color * 255 * 11) % 256) / 255f, ((color * 255 * 5) % 256) / 255f, color);
+                        float colorValue = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))
+                                / maxDistance;
+                        final Color color = colorProvider.getColor(colorValue);
+                        gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
                         gl.glVertex3d(x, y, z);
                     }
                 } else {
+                    @SuppressWarnings("unchecked")
+                    final DataSet4D<? extends Number, ? extends Number, ? extends Number, ? extends Number> dataSet4D = (DataSet4D<? extends Number, ? extends Number, ? extends Number, ? extends Number>) dataSet;
 
+                    final Iterator<? extends Number> xIt = dataSet4D.xIterator();
+                    final Iterator<? extends Number> yIt = dataSet4D.yIterator();
+                    final Iterator<? extends Number> zIt = dataSet4D.zIterator();
+                    final Iterator<? extends Number> wIt = dataSet4D.wIterator();
+
+                    double x, y, z, w;
+
+                    while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext() && wIt.hasNext()) {
+                        x = xIt.next().doubleValue();
+                        y = yIt.next().doubleValue();
+                        z = zIt.next().doubleValue();
+                        w = wIt.next().doubleValue();
+                        final Color color = colorProvider.getColor(w);
+                        gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
+                        gl.glVertex3d(x, y, z);
+                    }
                 }
                 gl.glEnd();
             }
@@ -395,7 +415,6 @@ public class JOGLDataViewer extends JPanel implements DataViewer
     @Override
     public void setDataSet(DataSet dataSet)
     {
-        Object old = this.dataSet;
         this.dataSet = dataSet;
 
         if (dataSet instanceof DataSet3D<?, ?, ?>) {
@@ -427,9 +446,6 @@ public class JOGLDataViewer extends JPanel implements DataViewer
             center[2] = d4.getMinZ().doubleValue() + (d4.getMaxZ().doubleValue() - d4.getMinZ().doubleValue()) / 2;
             transform = Matrix.translate(-center[0], -center[1], -center[2], Matrix.identity());
         }
-
-        if (old != null)
-            update();
     }
 
     @Override
@@ -441,10 +457,7 @@ public class JOGLDataViewer extends JPanel implements DataViewer
     @Override
     public void setCoordinatesSystem(CoordinatesSystem coordinatesSystem)
     {
-        Object old = this.coordinatesSystem;
         this.coordinatesSystem = coordinatesSystem;
-        if (old != null)
-            update();
     }
 
 }
