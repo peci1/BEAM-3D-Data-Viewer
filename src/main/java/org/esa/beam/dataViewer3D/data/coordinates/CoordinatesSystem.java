@@ -10,6 +10,8 @@ import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.sub;
 import org.esa.beam.dataViewer3D.data.axis.Axis;
 import org.esa.beam.dataViewer3D.data.axis.LinearAxis;
 import org.esa.beam.dataViewer3D.data.axis.tickgenerator.TickCountTickGenerator;
+import org.esa.beam.dataViewer3D.data.color.AbstractColorProvider;
+import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
@@ -25,10 +27,13 @@ public abstract class CoordinatesSystem
 {
 
     /** The grid to show. */
-    private Grid      grid     = null;
+    private Grid          grid          = null;
+
+    /** A color provider coloring the points. */
+    private ColorProvider colorProvider = AbstractColorProvider.getDefaultColorProvider();
 
     /** Whether to show a grid. */
-    protected boolean showGrid = false;
+    protected boolean     showGrid      = false;
 
     /**
      * Create a coordinate system with the given grid.
@@ -187,4 +192,23 @@ public abstract class CoordinatesSystem
 
         return new CoordinatesSystem4D<X, Y, Z, W>(axisX, axisY, axisZ, axisW, grid);
     }
+
+    /**
+     * @return A color provider coloring the points.
+     */
+    public ColorProvider getColorProvider()
+    {
+        return colorProvider;
+    }
+
+    /**
+     * Override to set the bounds.
+     * 
+     * @param colorProvider A color provider coloring the points.
+     */
+    public void setColorProvider(ColorProvider colorProvider)
+    {
+        this.colorProvider = colorProvider;
+    }
+
 }

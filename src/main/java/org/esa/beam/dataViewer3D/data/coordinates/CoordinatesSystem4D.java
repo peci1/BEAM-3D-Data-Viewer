@@ -4,6 +4,7 @@
 package org.esa.beam.dataViewer3D.data.coordinates;
 
 import org.esa.beam.dataViewer3D.data.axis.Axis;
+import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.grid.Grid;
 
 /**
@@ -159,5 +160,12 @@ public class CoordinatesSystem4D<X extends Number, Y extends Number, Z extends N
     public Axis<?>[] getAces()
     {
         return new Axis<?>[] { axisX, axisY, axisZ, axisW };
+    }
+
+    @Override
+    public void setColorProvider(ColorProvider colorProvider)
+    {
+        super.setColorProvider(colorProvider);
+        colorProvider.setBounds(axisW.getMin().doubleValue(), axisW.getMax().doubleValue());
     }
 }
