@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
+import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
 import org.esa.beam.dataViewer3D.data.dataset.AbstractDataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet;
@@ -129,7 +130,7 @@ public class DataViewer3DToolView extends AbstractToolView
      * This method doesn't update the view.
      * <p>
      * Call
-     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double)}
+     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double, ColorProvider)}
      * if needed.
      * 
      * @param bandX The band used for the x axis.
@@ -147,7 +148,7 @@ public class DataViewer3DToolView extends AbstractToolView
      * This method doesn't update the view.
      * <p>
      * Call
-     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double)}
+     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double, ColorProvider)}
      * if needed.
      * 
      * @param bandX The band used for the x axis.
@@ -202,10 +203,12 @@ public class DataViewer3DToolView extends AbstractToolView
      *            Pass <code>null</code> if the data set is only 3-dimensional.
      * @param wMax Maximum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
      *            Pass <code>null</code> if the data set is only 3-dimensional.
+     * @param colorProvider The color provider for coloring data points.
      */
     @SuppressWarnings("unchecked")
     public <X extends Number, Y extends Number, Z extends Number, W extends Number> void createCoordinatesSystemForCurrentDataSet(
-            Double xMin, Double xMax, Double yMin, Double yMax, Double zMin, Double zMax, Double wMin, Double wMax)
+            Double xMin, Double xMax, Double yMin, Double yMax, Double zMin, Double zMax, Double wMin, Double wMax,
+            ColorProvider colorProvider)
     {
         if (dataViewer.getDataSet() instanceof DataSet3D<?, ?, ?>) {
             DataSet3D<X, Y, Z> dataSet = (DataSet3D<X, Y, Z>) dataViewer.getDataSet();
@@ -222,6 +225,7 @@ public class DataViewer3DToolView extends AbstractToolView
                     castToType(dataSet.getMinW(), wMin), castToType(dataSet.getMaxW(), wMax), dataSet));
         }
         dataViewer.getCoordinatesSystem().setShowGrid(true);
+        dataViewer.getCoordinatesSystem().setColorProvider(colorProvider);
     }
 
     /**
@@ -300,7 +304,8 @@ public class DataViewer3DToolView extends AbstractToolView
                 maskExpression = bandSelectionDialog.getMaskExpression();
                 createCoordinatesSystemForCurrentDataSet(bandSelectionDialog.getxMin(), bandSelectionDialog.getxMax(),
                         bandSelectionDialog.getyMin(), bandSelectionDialog.getyMax(), bandSelectionDialog.getzMin(),
-                        bandSelectionDialog.getzMax(), bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax());
+                        bandSelectionDialog.getzMax(), bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax(),
+                        bandSelectionDialog.getColorProvider());
                 updateView();
             }
         }

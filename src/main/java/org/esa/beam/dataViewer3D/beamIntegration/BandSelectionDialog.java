@@ -44,6 +44,8 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLDocument;
 
 import org.esa.beam.dataViewer3D.beamIntegration.BandSelectionDialog.UniversalListener.IgnoredEvent;
+import org.esa.beam.dataViewer3D.data.color.AbstractColorProvider;
+import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.framework.barithm.PossiblyInvalidExpression;
 import org.esa.beam.framework.barithm.TypeUtils;
 import org.esa.beam.framework.datamodel.Band;
@@ -334,6 +336,12 @@ public class BandSelectionDialog extends ModalDialog
     public Double getwMax()
     {
         return wAutodetect ? null : wMax;
+    }
+
+    public ColorProvider getColorProvider()
+    {
+        // TODO write a color pallete selector
+        return AbstractColorProvider.getDefaultColorProvider();
     }
 
     @Override
