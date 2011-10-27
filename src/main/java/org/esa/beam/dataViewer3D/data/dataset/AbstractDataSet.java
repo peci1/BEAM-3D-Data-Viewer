@@ -96,7 +96,7 @@ public abstract class AbstractDataSet implements DataSet
     public static <X extends Number, Y extends Number, Z extends Number> DataSet3D<X, Y, Z> createFromDataSources(
             Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
     {
-        if (maxPoints < StreamDataSet.MAX_SIZE && x.size() < StreamDataSet.MAX_SIZE) {
+        if ((maxPoints == null || maxPoints < StreamDataSet.MAX_SIZE) && x.size() < StreamDataSet.MAX_SIZE) {
             return StreamDataSet.createFromDataSources(maxPoints, x, y, z);
         } else {
             throw new UnsupportedOperationException(AbstractDataSet.class
@@ -119,7 +119,7 @@ public abstract class AbstractDataSet implements DataSet
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> DataSet4D<X, Y, Z, W> createFromDataSources(
             Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
     {
-        if (maxPoints < StreamDataSet.MAX_SIZE && x.size() < StreamDataSet.MAX_SIZE) {
+        if ((maxPoints == null || maxPoints < StreamDataSet.MAX_SIZE) && x.size() < StreamDataSet.MAX_SIZE) {
             return StreamDataSet.createFromDataSources(maxPoints, x, y, z, w);
         } else {
             throw new UnsupportedOperationException(AbstractDataSet.class
