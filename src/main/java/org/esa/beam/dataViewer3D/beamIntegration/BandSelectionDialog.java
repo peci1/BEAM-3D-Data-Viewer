@@ -381,11 +381,17 @@ public class BandSelectionDialog extends ModalDialog
             width = targetProduct.getSceneRasterWidth();
             height = targetProduct.getSceneRasterHeight();
 
-            VirtualBand band = new VirtualBand(propertyName, expression.getType(), width, height,
+            final VirtualBand band = new VirtualBand(propertyName, expression.getType(), width, height,
                     expression.getExpression());
             setBandProperties(band, validMaskExpression);
 
             bands.add(band);
+
+            final Band toRemove = targetProduct.getBand(propertyName);
+            if (toRemove != null)
+                targetProduct.removeBand(toRemove);
+
+            targetProduct.addBand(band);
         }
 
         storePreferences();
@@ -406,8 +412,6 @@ public class BandSelectionDialog extends ModalDialog
             band.setValidPixelExpression("(" + validMaskExpression + ") & (" + maskExpression.getExpression() + ")");
         else
             band.setValidPixelExpression(validMaskExpression);
-        band.setModified(true);
-        targetProduct.addBand(band);
     }
 
     @Override
