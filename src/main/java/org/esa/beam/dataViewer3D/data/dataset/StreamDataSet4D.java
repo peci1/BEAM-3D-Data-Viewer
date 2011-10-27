@@ -14,6 +14,7 @@ import org.esa.beam.dataViewer3D.data.point.SimpleDataPoint4D;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
 import org.esa.beam.util.SkippableIterator;
+import org.esa.beam.util.ValidatingIterator;
 
 /**
  * A stream-backed 4D data set.
@@ -356,10 +357,10 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
 
             int alreadyProcessedPoints = 0;
             int size = xSource.size();
-            Iterator<NumericType<X>> xIt = xSource.numericTypeIterator();
-            Iterator<NumericType<Y>> yIt = ySource.numericTypeIterator();
-            Iterator<NumericType<Z>> zIt = zSource.numericTypeIterator();
-            Iterator<NumericType<W>> wIt = wSource.numericTypeIterator();
+            ValidatingIterator<NumericType<X>> xIt = xSource.numericTypeIterator();
+            ValidatingIterator<NumericType<Y>> yIt = ySource.numericTypeIterator();
+            ValidatingIterator<NumericType<Z>> zIt = zSource.numericTypeIterator();
+            ValidatingIterator<NumericType<W>> wIt = wSource.numericTypeIterator();
 
             NumericType<X> x;
             NumericType<Y> y;
@@ -375,6 +376,10 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
                 z = zIt.next();
                 w = wIt.next();
                 alreadyProcessedPoints++;
+
+                if (!xIt.isLastReturnedValid() || !yIt.isLastReturnedValid() || !zIt.isLastReturnedValid()
+                        || !wIt.isLastReturnedValid())
+                    continue;
 
                 if (minX == null || minX.doubleValue() > x.getNumber().doubleValue())
                     minX = x.getNumber();
