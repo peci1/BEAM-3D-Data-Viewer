@@ -61,6 +61,10 @@ public class JOGLDataViewer extends JPanel implements DataViewer
 
     /** The affine transformation that affects the display of the data set. */
     private double[]              transform         = Matrix.identity();
+    /** The maximum length of an axis. */
+    private double                maxLength;
+    /** The zoom ratio. */
+    private double                zoom              = 1d;
     /** The center of the data set (the camera will target it after initialization). */
     private double[]              center            = new double[] { 0, 0, 0 };
     /**
@@ -133,7 +137,7 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 Axis<?>[] aces = new Axis<?>[] { coordinatesSystem.getAces()[0], coordinatesSystem.getAces()[1],
                         coordinatesSystem.getAces()[2] };
 
-                double maxLength = NumberTypeUtils.max(aces[0].getLength(), aces[1].getLength(), aces[2].getLength())
+                maxLength = NumberTypeUtils.max(aces[0].getLength(), aces[1].getLength(), aces[2].getLength())
                         .doubleValue();
 
                 // Perspective.
@@ -327,7 +331,8 @@ public class JOGLDataViewer extends JPanel implements DataViewer
 
                 if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) > 0) {
                     // translate
-                    Matrix.translate(diffX, -diffY, 0, transform);
+                    Matrix.translate(diffX * maxLength / getWidth() * zoom / Math.pow(zoom, 1d / 4), -diffY * maxLength
+                            / getHeight() * zoom / Math.pow(zoom, 1d / 4), 0, transform);
                 } else {
                     // rotate
 
@@ -359,10 +364,14 @@ public class JOGLDataViewer extends JPanel implements DataViewer
             public void mouseWheelMoved(MouseWheelEvent e)
             {
                 // zoom
-                double shift = e.getWheelRotation()
-                        * ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0 ? 10 : 100);
+                final double multiplier = (100 + e.getWheelRotation()
+                        * ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0 ? 10 : 50)) / 100d;
 
-                Matrix.translate(0, 0, shift, transform);
+                if (zoom * multiplier < 0.001)
+                    return;
+
+                Matrix.scale(multiplier, multiplier, multiplier, transform);
+                zoom *= multiplier;
 
                 update();
             }
