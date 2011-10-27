@@ -17,6 +17,7 @@ import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.util.Guardian;
 import org.esa.beam.util.SkippableIterator;
+import org.esa.beam.util.ValidatingIterator;
 import org.esa.beam.visat.VisatApp;
 
 /**
@@ -68,7 +69,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
 
     @SuppressWarnings("unchecked")
     @Override
-    public SkippableIterator<N> iterator()
+    public ValidatingIterator<N> iterator()
     {
         if (!band.hasRasterData()) {
             try {
@@ -79,19 +80,19 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         }
 
         if (dataType == Double.class)
-            return (SkippableIterator<N>) new DoubleIterator();
+            return (ValidatingIterator<N>) new DoubleIterator();
         else if (dataType == Float.class)
-            return (SkippableIterator<N>) new FloatIterator();
+            return (ValidatingIterator<N>) new FloatIterator();
         else if (dataType == Integer.class)
-            return (SkippableIterator<N>) new IntegerIterator();
+            return (ValidatingIterator<N>) new IntegerIterator();
         else if (dataType == Short.class)
-            return (SkippableIterator<N>) new ShortIterator();
+            return (ValidatingIterator<N>) new ShortIterator();
         else
-            return (SkippableIterator<N>) new ByteIterator();
+            return (ValidatingIterator<N>) new ByteIterator();
     }
 
     @Override
-    public SkippableIterator<NumericType<N>> numericTypeIterator()
+    public ValidatingIterator<NumericType<N>> numericTypeIterator()
     {
         if (!band.hasRasterData()) {
             try {
@@ -102,7 +103,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         }
 
         return new AbstractIterator<NumericType<N>>() {
-            private final SkippableIterator<? extends NumericType<?>> it = createIterator();
+            private final AbstractIterator<? extends NumericType<?>> it = createIterator();
 
             @SuppressWarnings("unchecked")
             @Override
@@ -117,7 +118,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 return it.hasNext();
             }
 
-            private SkippableIterator<? extends NumericType<?>> createIterator()
+            private AbstractIterator<? extends NumericType<?>> createIterator()
             {
                 if (dataType == Double.class)
                     return new DoubleNumericTypeIterator(precision);
@@ -135,6 +136,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             public void skip(int n)
             {
                 it.skip(n);
+            }
+
+            @Override
+            public boolean isLastReturnedValid()
+            {
+                return it.isLastReturnedValid();
             }
 
         };
@@ -195,7 +202,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
      * @author Martin Pecka
      * @param <T> Type of the items to iterate over.
      */
-    protected abstract class AbstractIterator<T> implements SkippableIterator<T>
+    protected abstract class AbstractIterator<T> implements SkippableIterator<T>, ValidatingIterator<T>
     {
         @Override
         public final void remove()
@@ -212,11 +219,13 @@ public class BandDataSource<N extends Number> implements DataSource<N>
      */
     protected abstract class AbstractNumberIterator<T extends Number> extends AbstractIterator<T>
     {
-        protected final int width      = band.getRasterWidth(), height = band.getRasterHeight();
-        protected final int size       = width * height;
-        protected int       i          = 0, j = 0;
+        protected final int width        = band.getRasterWidth(), height = band.getRasterHeight();
+        protected final int size         = width * height;
+        protected int       i            = 0, j = 0, lastI = -1, lastJ = -1;
         /** This is true whenever we need to read another row of data. */
-        protected boolean   rowChanged = true;
+        protected boolean   rowChanged   = true;
+        /** The last returned value. */
+        protected T         lastReturned = null;
 
         @Override
         public boolean hasNext()
@@ -231,6 +240,17 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             j = (j + n) % width;
             rowChanged |= (n / width > 0);
         }
+
+        @Override
+        public boolean isLastReturnedValid()
+        {
+            if (band.isNoDataValueUsed())
+                // we can use == here, because there is no way of introducing some rounding errors
+                return lastReturned.doubleValue() == band.getNoDataValue();
+            else
+                return band.isPixelValid(lastI, lastJ);
+        }
+
     }
 
     private class DoubleIterator extends AbstractNumberIterator<Double>
@@ -240,6 +260,8 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         @Override
         public Double next()
         {
+            lastI = i;
+            lastJ = j;
             if (j >= buffer.length) {
                 j = 0;
                 rowChanged = true;
@@ -248,7 +270,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 band.getPixels(0, i++, width, 1, buffer);
                 rowChanged = false;
             }
-            return buffer[j++];
+            return lastReturned = buffer[j++];
         }
 
     };
@@ -260,6 +282,8 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         @Override
         public Float next()
         {
+            lastI = i;
+            lastJ = j;
             if (j >= buffer.length) {
                 j = 0;
                 rowChanged = true;
@@ -268,7 +292,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 band.getPixels(0, i++, width, 1, buffer);
                 rowChanged = false;
             }
-            return buffer[j++];
+            return lastReturned = buffer[j++];
         }
 
     };
@@ -280,6 +304,8 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         @Override
         public Integer next()
         {
+            lastI = i;
+            lastJ = j;
             if (j >= buffer.length) {
                 j = 0;
                 rowChanged = true;
@@ -288,7 +314,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 band.getPixels(0, i++, width, 1, buffer);
                 rowChanged = false;
             }
-            return buffer[j++];
+            return lastReturned = buffer[j++];
         }
 
     };
@@ -300,6 +326,8 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         @Override
         public Short next()
         {
+            lastI = i;
+            lastJ = j;
             if (j >= buffer.length) {
                 j = 0;
                 rowChanged = true;
@@ -308,7 +336,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 band.getPixels(0, i++, width, 1, buffer);
                 rowChanged = false;
             }
-            return (short) buffer[j++];
+            return lastReturned = (short) buffer[j++];
         }
 
     };
@@ -320,6 +348,8 @@ public class BandDataSource<N extends Number> implements DataSource<N>
         @Override
         public Byte next()
         {
+            lastI = i;
+            lastJ = j;
             if (j >= buffer.length) {
                 j = 0;
                 rowChanged = true;
@@ -328,7 +358,7 @@ public class BandDataSource<N extends Number> implements DataSource<N>
                 band.getPixels(0, i++, width, 1, buffer);
                 rowChanged = false;
             }
-            return (byte) buffer[j++];
+            return lastReturned = (byte) buffer[j++];
         }
 
     };
@@ -361,6 +391,12 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             it.skip(n);
         }
 
+        @Override
+        public boolean isLastReturnedValid()
+        {
+            return it.isLastReturnedValid();
+        }
+
     }
 
     private class FloatNumericTypeIterator extends AbstractIterator<FloatType>
@@ -391,6 +427,11 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             it.skip(n);
         }
 
+        @Override
+        public boolean isLastReturnedValid()
+        {
+            return it.isLastReturnedValid();
+        }
     }
 
     private class IntegerNumericTypeIterator extends AbstractIterator<IntType>
@@ -415,6 +456,11 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             it.skip(n);
         }
 
+        @Override
+        public boolean isLastReturnedValid()
+        {
+            return it.isLastReturnedValid();
+        }
     }
 
     private class ShortNumericTypeIterator extends AbstractIterator<ShortType>
@@ -439,6 +485,11 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             it.skip(n);
         }
 
+        @Override
+        public boolean isLastReturnedValid()
+        {
+            return it.isLastReturnedValid();
+        }
     }
 
     private class ByteNumericTypeIterator extends AbstractIterator<ByteType>
@@ -463,5 +514,10 @@ public class BandDataSource<N extends Number> implements DataSource<N>
             it.skip(n);
         }
 
+        @Override
+        public boolean isLastReturnedValid()
+        {
+            return it.isLastReturnedValid();
+        }
     }
 }

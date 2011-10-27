@@ -4,8 +4,9 @@
 package org.esa.beam.dataViewer3D.data.source;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+
+import org.esa.beam.util.ValidatingIterator;
 
 /**
  * Data source producing random data. Mainly for development purposes.
@@ -36,9 +37,9 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
     }
 
     @Override
-    public Iterator<N> iterator()
+    public ValidatingIterator<N> iterator()
     {
-        return new Iterator<N>() {
+        return new ValidatingIterator<N>() {
             private int i = 0;
 
             @Override
@@ -59,6 +60,12 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
             public void remove()
             {
                 throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isLastReturnedValid()
+            {
+                return true;
             }
         };
     }

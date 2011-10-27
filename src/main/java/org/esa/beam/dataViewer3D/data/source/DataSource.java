@@ -3,9 +3,8 @@
  */
 package org.esa.beam.dataViewer3D.data.source;
 
-import java.util.Iterator;
-
 import org.esa.beam.dataViewer3D.data.type.NumericType;
+import org.esa.beam.util.ValidatingIterator;
 
 /**
  * A data source providing input for data sets.
@@ -22,11 +21,14 @@ public interface DataSource<N extends Number> extends Iterable<N>
      */
     int size();
 
+    @Override
+    ValidatingIterator<N> iterator();
+
     /**
      * Return an iterator that iterates the input data as {@link NumericType}s.
      * 
      * @return An iterator that iterates the input data as {@link NumericType}s.
      */
-    Iterator<NumericType<N>> numericTypeIterator();
+    ValidatingIterator<NumericType<N>> numericTypeIterator();
 
 }

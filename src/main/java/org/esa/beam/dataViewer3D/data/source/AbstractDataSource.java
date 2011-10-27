@@ -3,9 +3,8 @@
  */
 package org.esa.beam.dataViewer3D.data.source;
 
-import java.util.Iterator;
-
 import org.esa.beam.dataViewer3D.data.type.NumericType;
+import org.esa.beam.util.ValidatingIterator;
 
 /**
  * Base for all data sources.
@@ -16,11 +15,11 @@ import org.esa.beam.dataViewer3D.data.type.NumericType;
 public abstract class AbstractDataSource<N extends Number> implements DataSource<N>
 {
     @Override
-    public Iterator<NumericType<N>> numericTypeIterator()
+    public ValidatingIterator<NumericType<N>> numericTypeIterator()
     {
-        return new Iterator<NumericType<N>>() {
+        return new ValidatingIterator<NumericType<N>>() {
 
-            Iterator<N> it = iterator();
+            ValidatingIterator<N> it = iterator();
 
             @Override
             public boolean hasNext()
@@ -38,6 +37,12 @@ public abstract class AbstractDataSource<N extends Number> implements DataSource
             public void remove()
             {
                 throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isLastReturnedValid()
+            {
+                return it.isLastReturnedValid();
             }
         };
     }
