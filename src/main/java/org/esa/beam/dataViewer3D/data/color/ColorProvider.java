@@ -23,6 +23,20 @@ public interface ColorProvider
     void setBounds(double min, double max);
 
     /**
+     * Return the lower bound.
+     * 
+     * @return The lower bound.
+     */
+    double getMin();
+
+    /**
+     * Return the upper bound.
+     * 
+     * @return The upper bound.
+     */
+    double getMax();
+
+    /**
      * Get the color corresponding to the given sample. If the sample is out of the bounds, returns the value for
      * minimum or maximum.
      * 

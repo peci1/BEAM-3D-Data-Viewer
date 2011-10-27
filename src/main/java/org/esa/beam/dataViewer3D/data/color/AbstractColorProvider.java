@@ -29,6 +29,18 @@ public abstract class AbstractColorProvider implements ColorProvider
     }
 
     @Override
+    public double getMin()
+    {
+        return min;
+    }
+
+    @Override
+    public double getMax()
+    {
+        return max;
+    }
+
+    @Override
     public Color getColor(double sample)
     {
         return getColor(sample, 1);
