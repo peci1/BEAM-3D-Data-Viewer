@@ -17,6 +17,7 @@ import org.esa.beam.dataViewer3D.data.type.DoubleType;
 import org.esa.beam.dataViewer3D.data.type.FloatType;
 import org.esa.beam.dataViewer3D.data.type.IntType;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
+import org.esa.beam.util.ValidatingIterator;
 
 /**
  * Common functions for test classes.
@@ -207,9 +208,9 @@ public class Common
         return new DataSource<Byte>() {
 
             @Override
-            public Iterator<Byte> iterator()
+            public ValidatingIterator<Byte> iterator()
             {
-                return new Iterator<Byte>() {
+                return new ValidatingIterator<Byte>() {
                     Iterator<DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>> it = data.iterator();
 
                     @Override
@@ -229,6 +230,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
 
@@ -239,9 +246,9 @@ public class Common
             }
 
             @Override
-            public Iterator<NumericType<Byte>> numericTypeIterator()
+            public ValidatingIterator<NumericType<Byte>> numericTypeIterator()
             {
-                return new Iterator<NumericType<Byte>>() {
+                return new ValidatingIterator<NumericType<Byte>>() {
                     Iterator<DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>> it = data.iterator();
 
                     @Override
@@ -261,6 +268,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
         };
@@ -273,9 +286,9 @@ public class Common
         return new DataSource<Integer>() {
 
             @Override
-            public Iterator<Integer> iterator()
+            public ValidatingIterator<Integer> iterator()
             {
-                return new Iterator<Integer>() {
+                return new ValidatingIterator<Integer>() {
                     Iterator<DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>> it = data.iterator();
 
                     @Override
@@ -295,6 +308,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
 
@@ -305,9 +324,9 @@ public class Common
             }
 
             @Override
-            public Iterator<NumericType<Integer>> numericTypeIterator()
+            public ValidatingIterator<NumericType<Integer>> numericTypeIterator()
             {
-                return new Iterator<NumericType<Integer>>() {
+                return new ValidatingIterator<NumericType<Integer>>() {
                     Iterator<DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>> it = data.iterator();
 
                     @Override
@@ -327,6 +346,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
         };
@@ -339,9 +364,9 @@ public class Common
         return new DataSource<Double>() {
 
             @Override
-            public Iterator<Double> iterator()
+            public ValidatingIterator<Double> iterator()
             {
-                return new Iterator<Double>() {
+                return new ValidatingIterator<Double>() {
                     Iterator<DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>> it = data.iterator();
 
                     @Override
@@ -361,6 +386,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
 
@@ -371,9 +402,9 @@ public class Common
             }
 
             @Override
-            public Iterator<NumericType<Double>> numericTypeIterator()
+            public ValidatingIterator<NumericType<Double>> numericTypeIterator()
             {
-                return new Iterator<NumericType<Double>>() {
+                return new ValidatingIterator<NumericType<Double>>() {
                     Iterator<DataPoint3D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>>> it = data.iterator();
 
                     @Override
@@ -393,6 +424,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
         };
@@ -405,9 +442,9 @@ public class Common
         return new DataSource<Float>() {
 
             @Override
-            public Iterator<Float> iterator()
+            public ValidatingIterator<Float> iterator()
             {
-                return new Iterator<Float>() {
+                return new ValidatingIterator<Float>() {
                     Iterator<DataPoint4D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>, NumericType<Float>>> it = data.iterator();
 
                     @Override
@@ -427,6 +464,12 @@ public class Common
                     {
                         throw new UnsupportedOperationException();
                     }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
+                    }
                 };
             }
 
@@ -437,9 +480,9 @@ public class Common
             }
 
             @Override
-            public Iterator<NumericType<Float>> numericTypeIterator()
+            public ValidatingIterator<NumericType<Float>> numericTypeIterator()
             {
-                return new Iterator<NumericType<Float>>() {
+                return new ValidatingIterator<NumericType<Float>>() {
                     Iterator<DataPoint4D<NumericType<Byte>, NumericType<Integer>, NumericType<Double>, NumericType<Float>>> it = data.iterator();
 
                     @Override
@@ -458,6 +501,12 @@ public class Common
                     public void remove()
                     {
                         throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public boolean isLastReturnedValid()
+                    {
+                        return true;
                     }
                 };
             }
