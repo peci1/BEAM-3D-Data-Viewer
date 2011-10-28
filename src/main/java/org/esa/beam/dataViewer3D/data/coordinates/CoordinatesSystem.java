@@ -129,13 +129,37 @@ public abstract class CoordinatesSystem
     public static <X extends Number, Y extends Number, Z extends Number> CoordinatesSystem3D<X, Y, Z> createCoordinatesSystem(
             X minX, X maxX, Y minY, Y maxY, Z minZ, Z maxZ, DataSet3D<X, Y, Z> dataSet)
     {
-        Axis<X> axisX = new LinearAxis<X>("x", minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
+        return createCoordinatesSystem(minX, maxX, "x", minY, maxY, "y", minZ, maxZ, "z", dataSet);
+    }
+
+    /**
+     * Create a default implementation of a 3D coordinate system for the given data set with the option to specify some
+     * maxima or minima.
+     * 
+     * @param minX Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxX Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param xLabel Label for x axis.
+     * @param minY Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxY Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yLabel Label for y axis.
+     * @param minZ Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxZ Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zLabel Label for z axis.
+     * 
+     * @param dataSet The data set to generate coordinate system for.
+     * @return The created coordinates system.
+     */
+    public static <X extends Number, Y extends Number, Z extends Number> CoordinatesSystem3D<X, Y, Z> createCoordinatesSystem(
+            X minX, X maxX, String xLabel, Y minY, Y maxY, String yLabel, Z minZ, Z maxZ, String zLabel,
+            DataSet3D<X, Y, Z> dataSet)
+    {
+        Axis<X> axisX = new LinearAxis<X>(xLabel, minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
                 dataSet.getMinX(), multiply(1.25, sub(dataSet.getMaxX(), dataSet.getMinX()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinX(), 10));
-        Axis<Y> axisY = new LinearAxis<Y>("y", minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
+        Axis<Y> axisY = new LinearAxis<Y>(yLabel, minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
                 dataSet.getMinY(), multiply(1.25, sub(dataSet.getMaxY(), dataSet.getMinY()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinY(), 10));
-        Axis<Z> axisZ = new LinearAxis<Z>("z", minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
+        Axis<Z> axisZ = new LinearAxis<Z>(zLabel, minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
                 dataSet.getMinZ(), multiply(1.25, sub(dataSet.getMaxZ(), dataSet.getMinZ()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinZ(), 10));
 
@@ -175,17 +199,44 @@ public abstract class CoordinatesSystem
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> CoordinatesSystem4D<X, Y, Z, W> createCoordinatesSystem(
             X minX, X maxX, Y minY, Y maxY, Z minZ, Z maxZ, W minW, W maxW, DataSet4D<X, Y, Z, W> dataSet)
     {
-        Axis<X> axisX = new LinearAxis<X>("x", minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
+        return createCoordinatesSystem(minX, maxX, "x", minY, maxY, "y", minZ, maxZ, "z", minW, maxW, "w", dataSet);
+    }
+
+    /**
+     * Create a default implementation of a 3D coordinate system for the given data set with the option to specify some
+     * maxima or minima.
+     * 
+     * @param minX Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxX Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param xLabel Label for x axis.
+     * @param minY Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxY Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yLabel Label for y axis.
+     * @param minZ Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxZ Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zLabel Label for z axis.
+     * @param minW Minimum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param maxW Maximum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param wLabel Label for w axis.
+     * 
+     * @param dataSet The data set to generate coordinate system for.
+     * @return The created coordinates system.
+     */
+    public static <X extends Number, Y extends Number, Z extends Number, W extends Number> CoordinatesSystem4D<X, Y, Z, W> createCoordinatesSystem(
+            X minX, X maxX, String xLabel, Y minY, Y maxY, String yLabel, Z minZ, Z maxZ, String zLabel, W minW,
+            W maxW, String wLabel, DataSet4D<X, Y, Z, W> dataSet)
+    {
+        Axis<X> axisX = new LinearAxis<X>(xLabel, minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
                 dataSet.getMinX(), multiply(1.25, sub(dataSet.getMaxX(), dataSet.getMinX()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinX(), 10));
-        Axis<Y> axisY = new LinearAxis<Y>("y", minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
+        Axis<Y> axisY = new LinearAxis<Y>(yLabel, minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
                 dataSet.getMinY(), multiply(1.25, sub(dataSet.getMaxY(), dataSet.getMinY()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinY(), 10));
-        Axis<Z> axisZ = new LinearAxis<Z>("z", minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
+        Axis<Z> axisZ = new LinearAxis<Z>(zLabel, minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
                 dataSet.getMinZ(), multiply(1.25, sub(dataSet.getMaxZ(), dataSet.getMinZ()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinZ(), 10));
         // TODO change to color axis
-        Axis<W> axisW = new LinearAxis<W>("w", minW != null ? minW : dataSet.getMinW(), maxW != null ? maxW
+        Axis<W> axisW = new LinearAxis<W>(wLabel, minW != null ? minW : dataSet.getMinW(), maxW != null ? maxW
                 : dataSet.getMaxW(), TickCountTickGenerator.createForSampleValue(dataSet.getMinW(), 10));
 
         Grid grid = new GridFromTicks(axisX, axisY, axisZ);

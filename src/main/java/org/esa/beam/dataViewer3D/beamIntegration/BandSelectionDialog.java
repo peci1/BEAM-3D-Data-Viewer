@@ -344,6 +344,40 @@ public class BandSelectionDialog extends ModalDialog
         return AbstractColorProvider.getDefaultColorProvider();
     }
 
+    /**
+     * @return The label of the x axis.
+     */
+    public String getXLabel()
+    {
+        return ((VirtualBand) bands.get(0)).getExpression();
+    }
+
+    /**
+     * @return The label of the y axis.
+     */
+    public String getYLabel()
+    {
+        return ((VirtualBand) bands.get(1)).getExpression();
+    }
+
+    /**
+     * @return The label of the z axis.
+     */
+    public String getZLabel()
+    {
+        return ((VirtualBand) bands.get(2)).getExpression();
+    }
+
+    /**
+     * @return The label of the w axis.
+     */
+    public String getWLabel()
+    {
+        if (bands.size() < 4)
+            return null;
+        return ((VirtualBand) bands.get(3)).getExpression();
+    }
+
     @Override
     public int show()
     {

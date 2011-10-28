@@ -130,7 +130,7 @@ public class DataViewer3DToolView extends AbstractToolView
      * This method doesn't update the view.
      * <p>
      * Call
-     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double, ColorProvider)}
+     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, String, Double, Double, String, Double, Double, String, Double, Double, String, ColorProvider)}
      * if needed.
      * 
      * @param bandX The band used for the x axis.
@@ -148,7 +148,7 @@ public class DataViewer3DToolView extends AbstractToolView
      * This method doesn't update the view.
      * <p>
      * Call
-     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, Double, Double, Double, Double, Double, Double, ColorProvider)}
+     * {@link #createCoordinatesSystemForCurrentDataSet(Double, Double, String, Double, Double, String, Double, Double, String, Double, Double, String, ColorProvider)}
      * if needed.
      * 
      * @param bandX The band used for the x axis.
@@ -195,34 +195,38 @@ public class DataViewer3DToolView extends AbstractToolView
      * 
      * @param xMin Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param xMax Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param xLabel Label of the x axis.
      * @param yMin Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param yMax Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yLabel Label of the y axis.
      * @param zMin Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param zMax Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zLabel Label of the z axis.
      * @param wMin Minimum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
      *            Pass <code>null</code> if the data set is only 3-dimensional.
      * @param wMax Maximum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
      *            Pass <code>null</code> if the data set is only 3-dimensional.
+     * @param wLabel Label of the w axis. Pass <code>null</code> if the data set is only 3-dimensional
      * @param colorProvider The color provider for coloring data points.
      */
     @SuppressWarnings("unchecked")
     public <X extends Number, Y extends Number, Z extends Number, W extends Number> void createCoordinatesSystemForCurrentDataSet(
-            Double xMin, Double xMax, Double yMin, Double yMax, Double zMin, Double zMax, Double wMin, Double wMax,
-            ColorProvider colorProvider)
+            Double xMin, Double xMax, String xLabel, Double yMin, Double yMax, String yLabel, Double zMin, Double zMax,
+            String zLabel, Double wMin, Double wMax, String wLabel, ColorProvider colorProvider)
     {
         if (dataViewer.getDataSet() instanceof DataSet3D<?, ?, ?>) {
             DataSet3D<X, Y, Z> dataSet = (DataSet3D<X, Y, Z>) dataViewer.getDataSet();
             dataViewer.setCoordinatesSystem(CoordinatesSystem.createCoordinatesSystem(
-                    castToType(dataSet.getMinX(), xMin), castToType(dataSet.getMinX(), xMax),
-                    castToType(dataSet.getMinY(), yMin), castToType(dataSet.getMaxY(), yMax),
-                    castToType(dataSet.getMinZ(), zMin), castToType(dataSet.getMaxZ(), zMax), dataSet));
+                    castToType(dataSet.getMinX(), xMin), castToType(dataSet.getMinX(), xMax), xLabel,
+                    castToType(dataSet.getMinY(), yMin), castToType(dataSet.getMaxY(), yMax), yLabel,
+                    castToType(dataSet.getMinZ(), zMin), castToType(dataSet.getMaxZ(), zMax), zLabel, dataSet));
         } else {
             DataSet4D<X, Y, Z, W> dataSet = (DataSet4D<X, Y, Z, W>) dataViewer.getDataSet();
             dataViewer.setCoordinatesSystem(CoordinatesSystem.createCoordinatesSystem(
-                    castToType(dataSet.getMinX(), xMin), castToType(dataSet.getMinX(), xMax),
-                    castToType(dataSet.getMinY(), yMin), castToType(dataSet.getMaxY(), yMax),
-                    castToType(dataSet.getMinZ(), zMin), castToType(dataSet.getMaxZ(), zMax),
-                    castToType(dataSet.getMinW(), wMin), castToType(dataSet.getMaxW(), wMax), dataSet));
+                    castToType(dataSet.getMinX(), xMin), castToType(dataSet.getMinX(), xMax), xLabel,
+                    castToType(dataSet.getMinY(), yMin), castToType(dataSet.getMaxY(), yMax), yLabel,
+                    castToType(dataSet.getMinZ(), zMin), castToType(dataSet.getMaxZ(), zMax), zLabel,
+                    castToType(dataSet.getMinW(), wMin), castToType(dataSet.getMaxW(), wMax), wLabel, dataSet));
         }
         dataViewer.getCoordinatesSystem().setShowGrid(true);
         dataViewer.getCoordinatesSystem().setColorProvider(colorProvider);
@@ -303,9 +307,10 @@ public class DataViewer3DToolView extends AbstractToolView
                 }
                 maskExpression = bandSelectionDialog.getMaskExpression();
                 createCoordinatesSystemForCurrentDataSet(bandSelectionDialog.getxMin(), bandSelectionDialog.getxMax(),
-                        bandSelectionDialog.getyMin(), bandSelectionDialog.getyMax(), bandSelectionDialog.getzMin(),
-                        bandSelectionDialog.getzMax(), bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax(),
-                        bandSelectionDialog.getColorProvider());
+                        bandSelectionDialog.getXLabel(), bandSelectionDialog.getyMin(), bandSelectionDialog.getyMax(),
+                        bandSelectionDialog.getYLabel(), bandSelectionDialog.getzMin(), bandSelectionDialog.getzMax(),
+                        bandSelectionDialog.getZLabel(), bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax(),
+                        bandSelectionDialog.getWLabel(), bandSelectionDialog.getColorProvider());
                 updateView();
             }
         }
