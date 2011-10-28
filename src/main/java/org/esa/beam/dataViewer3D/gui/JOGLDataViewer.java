@@ -136,10 +136,8 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 gl.glMatrixMode(GL.GL_PROJECTION);
                 gl.glLoadIdentity();
 
-                Axis<?>[] aces = new Axis<?>[] { coordinatesSystem.getAces()[0], coordinatesSystem.getAces()[1],
-                        coordinatesSystem.getAces()[2] };
-
-                maxLength = NumberTypeUtils.max(aces[0].getLength(), aces[1].getLength(), aces[2].getLength())
+                maxLength = NumberTypeUtils.max(coordinatesSystem.getAces()[0].getLength(),
+                        coordinatesSystem.getAces()[1].getLength(), coordinatesSystem.getAces()[2].getLength())
                         .doubleValue();
 
                 // Perspective.
@@ -157,7 +155,7 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 // the drawing methods
                 drawGrid(gl, coordinatesSystem.getGrid());
                 drawDataset(gl, coordinatesSystem.getColorProvider());
-                drawAces(gl, glu, aces);
+                drawAces(gl, glu, coordinatesSystem);
             }
 
             /**
@@ -165,13 +163,14 @@ public class JOGLDataViewer extends JPanel implements DataViewer
              * 
              * @param gl The {@link javax.media.opengl.GL} instance to use.
              * @param glu The {@link javax.media.opengl.glu.GLU} instance to use.
-             * @param aces The aces to draw.
+             * @param coordinatesSystem The coordinates system containing the aces to draw.
              */
-            private void drawAces(GL gl, GLU glu, Axis<?>[] aces)
+            private void drawAces(GL gl, GLU glu, CoordinatesSystem coordinatesSystem)
             {
                 // in order to set different line widths we must call begin/end methods between the width changes
                 // gl.glBegin(GL.GL_LINES);
                 {
+                    Axis<?>[] aces = coordinatesSystem.getAces();
                     TextRenderer textRend = new TextRenderer(Font.decode("Arial-bold-14"), false, true, null, true);
                     int[] viewport = new int[4];
                     double[] point = new double[3];
@@ -241,6 +240,69 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                             textRend.endRendering();
                         }
                         gl.glLineWidth(1.5f);
+                    }
+                    if (aces.length == 4) {
+                        gl.glMatrixMode(GL.GL_PROJECTION);
+                        gl.glPushMatrix();
+                        gl.glLoadIdentity();
+                        gl.glMatrixMode(GL.GL_MODELVIEW);
+                        gl.glPushMatrix();
+                        gl.glLoadIdentity();
+
+                        {
+                            final double xRatioFromPx = 2d / getWidth(), yRatioFromPx = 2d / getHeight();
+                            final double textLeft = -0.9;
+                            final double labelTop = (getHeight() - 8) * yRatioFromPx - 1, labelMargin = 8 * yRatioFromPx;
+
+                            textRend = new TextRenderer(Font.decode("Arial-bold-12"), false, true, null, false);
+                            textRend.beginRendering(getWidth(), getHeight());
+                            gl.glColor3f(0f, 0f, 0f);
+                            textBounds = textRend.getBounds(aces[3].getLabel());
+                            textRend.draw(aces[3].getLabel(), (int) ((textLeft + 1) / xRatioFromPx),
+                                    (int) ((labelTop + 1) / yRatioFromPx - textBounds.getHeight()));
+                            textRend.endRendering();
+
+                            final double width = 100 * xRatioFromPx, height = 15 * yRatioFromPx, top = labelTop
+                                    - labelMargin - textBounds.getHeight() * yRatioFromPx;
+
+                            textRend.beginRendering(getWidth(), getHeight());
+                            gl.glColor3f(0f, 0f, 0f);
+                            textBounds = textRend.getBounds(aces[3].getMin().toString());
+                            textRend.draw(aces[3].getMin().toString(), (int) ((textLeft + 1) / xRatioFromPx),
+                                    (int) ((top + 1) / yRatioFromPx - textBounds.getHeight()));
+                            textRend.endRendering();
+
+                            final double left = textLeft + (textBounds.getWidth() + 8) * xRatioFromPx;
+                            final int numParts = 20;
+                            final ColorProvider colorProvider = coordinatesSystem.getColorProvider();
+                            final double colorProviderRange = colorProvider.getMax() - colorProvider.getMin();
+
+                            gl.glBegin(GL.GL_QUAD_STRIP);
+                            {
+                                double percentDone = 0;
+                                for (int i = 0; i <= numParts; i++) {
+                                    percentDone = ((double) i) / numParts;
+                                    Color color = colorProvider.getColor(colorProvider.getMin() + colorProviderRange
+                                            * percentDone);
+                                    gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
+                                    gl.glVertex2d(left + width * percentDone, top);
+                                    gl.glVertex2d(left + width * percentDone, top - height);
+                                }
+                            }
+                            gl.glEnd();
+
+                            textRend.beginRendering(getWidth(), getHeight());
+                            gl.glColor3f(0f, 0f, 0f);
+                            textBounds = textRend.getBounds(aces[3].getMax().toString());
+                            textRend.draw(aces[3].getMax().toString(), (int) ((left + width + 1) / xRatioFromPx + 8),
+                                    (int) ((top + 1) / yRatioFromPx - textBounds.getHeight()));
+                            textRend.endRendering();
+                        }
+
+                        gl.glMatrixMode(GL.GL_PROJECTION);
+                        gl.glPopMatrix();
+                        gl.glMatrixMode(GL.GL_MODELVIEW);
+                        gl.glPopMatrix();
                     }
                 }
                 // gl.glEnd();
