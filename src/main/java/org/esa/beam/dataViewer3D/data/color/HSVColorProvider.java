@@ -17,7 +17,9 @@ public class HSVColorProvider extends AbstractColorProvider
     public Color getColor(double sample, double weight)
     {
         final double val = (sample < min ? min : (sample > max ? max : sample));
-        return Color.getHSBColor((float) ((val - min) / difference), 1f, (float) weight);
+        // we scale the hue to interval [0, 0.8], because if it would go up to 1.0, the color for min and max would be
+        // the same
+        return Color.getHSBColor((float) ((val - min) / difference) * 0.8f, 1f, (float) weight);
     }
 
 }
