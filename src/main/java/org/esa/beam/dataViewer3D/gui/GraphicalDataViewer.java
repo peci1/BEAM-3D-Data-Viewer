@@ -31,4 +31,9 @@ public interface GraphicalDataViewer extends DataViewer
      * @param callback The callback called after the image is saved.
      */
     void copyImageToClipboard(final ImageCaptureCallback callback);
+
+    /**
+     * Reset the transformation (rotation, translation, zoom) to the default state.
+     */
+    void resetTransformation();
 }

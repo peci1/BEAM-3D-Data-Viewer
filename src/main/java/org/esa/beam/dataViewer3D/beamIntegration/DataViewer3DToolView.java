@@ -66,6 +66,8 @@ public class DataViewer3DToolView extends AbstractToolView
     protected final GraphicalDataViewer dataViewer     = createDataViewer();
     /** The popup menu of the viewer panel. */
     protected final JPopupMenu          popupMenu      = new JPopupMenu();
+    /** The button for updating the view. */
+    protected AbstractButton            updateViewButton;
 
     @Override
     protected JComponent createControl()
@@ -86,7 +88,7 @@ public class DataViewer3DToolView extends AbstractToolView
         selectBandsButton.setEnabled(false);
 
         // AbstractButton updateViewButton = ToolButtonFactory.createButton(new UpdateViewAction(), false);
-        final AbstractButton updateViewButton = new JButton(new UpdateViewAction());
+        updateViewButton = new JButton(new UpdateViewAction());
         updateViewButton.setText("Update view"); /* I18N */// TODO change to icon
         updateViewButton.setToolTipText("Update the view to reflect changes in the source bands");
         updateViewButton.setName(getContext().getPane().getControl().getName() + ".updateView.button");
@@ -192,6 +194,7 @@ public class DataViewer3DToolView extends AbstractToolView
                     BandDataSource.createForBand(bandW, 10));
         }
         dataViewer.setDataSet(dataSet);
+        updateViewButton.setEnabled(true);
     }
 
     /**
@@ -252,13 +255,17 @@ public class DataViewer3DToolView extends AbstractToolView
      */
     public void updateView()
     {
-        if (dataViewer.getDataSet() != null) {
-            if (!(viewerPane.getComponent(0) instanceof DataViewer)) {
-                viewerPane.removeAll();
-                viewerPane.add((JComponent) dataViewer); // dataViewer is surely a JComponent (see createDataViewer() )
-            }
-            dataViewer.update();
+        if (!(viewerPane.getComponent(0) instanceof DataViewer)) {
+            // the "select bands" button is displayed
+            viewerPane.removeAll();
+            viewerPane.add((JComponent) dataViewer); // dataViewer is surely a JComponent (see createDataViewer() )
         }
+        if (involvedBands.size() == 3) {
+            setBands(involvedBands.get(0), involvedBands.get(2), involvedBands.get(2));
+        } else if (involvedBands.size() == 4) {
+            setBands(involvedBands.get(0), involvedBands.get(2), involvedBands.get(2), involvedBands.get(3));
+        }
+        dataViewer.update();
     }
 
     /**
@@ -357,8 +364,19 @@ public class DataViewer3DToolView extends AbstractToolView
             }
         });
 
+        final JMenuItem resetViewItem = new JMenuItem("Reset the view", KeyEvent.VK_R);/* I18N */
+        resetViewItem.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                dataViewer.resetTransformation();
+            }
+        });
+
         popupMenu.add(saveImageMenuItem);
         popupMenu.add(copyToClipboardMenuItem);
+        popupMenu.add(resetViewItem);
 
         ((JComponent) dataViewer).addMouseListener(new MouseAdapter() {
 
@@ -441,6 +459,7 @@ public class DataViewer3DToolView extends AbstractToolView
         @Override
         public void actionPerformed(ActionEvent e)
         {
+            dataViewer.resetTransformation();
             updateView();
         }
 

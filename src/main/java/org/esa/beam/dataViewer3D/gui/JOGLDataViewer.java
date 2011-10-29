@@ -575,7 +575,7 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             center[0] = d3.getMinX().doubleValue() + (d3.getMaxX().doubleValue() - d3.getMinX().doubleValue()) / 2;
             center[1] = d3.getMinY().doubleValue() + (d3.getMaxY().doubleValue() - d3.getMinY().doubleValue()) / 2;
             center[2] = d3.getMinZ().doubleValue() + (d3.getMaxZ().doubleValue() - d3.getMinZ().doubleValue()) / 2;
-            transform = Matrix.translate(-center[0], -center[1], -center[2], Matrix.identity());
+            resetTransformation();
         } else if (dataSet instanceof DataSet4D<?, ?, ?, ?>) {
             DataSet4D<?, ?, ?, ?> d4 = (DataSet4D<?, ?, ?, ?>) dataSet;
             minPoint[0] = d4.getMinX().doubleValue();
@@ -589,8 +589,15 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             center[0] = d4.getMinX().doubleValue() + (d4.getMaxX().doubleValue() - d4.getMinX().doubleValue()) / 2;
             center[1] = d4.getMinY().doubleValue() + (d4.getMaxY().doubleValue() - d4.getMinY().doubleValue()) / 2;
             center[2] = d4.getMinZ().doubleValue() + (d4.getMaxZ().doubleValue() - d4.getMinZ().doubleValue()) / 2;
-            transform = Matrix.translate(-center[0], -center[1], -center[2], Matrix.identity());
+            resetTransformation();
         }
+    }
+
+    @Override
+    public void resetTransformation()
+    {
+        transform = Matrix.translate(-center[0], -center[1], -center[2], Matrix.identity());
+        zoom = 1;
     }
 
     @Override
