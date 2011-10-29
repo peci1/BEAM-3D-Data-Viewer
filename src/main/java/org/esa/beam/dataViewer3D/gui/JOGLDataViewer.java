@@ -8,13 +8,22 @@ import jahuwaldt.gl.Matrix;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 
+import javax.imageio.ImageIO;
 import javax.media.opengl.GL;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCanvas;
@@ -32,6 +41,7 @@ import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.grid.Grid;
 import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
+import org.esa.beam.util.ImageTransferable;
 
 import com.sun.opengl.util.j2d.TextRenderer;
 
@@ -40,7 +50,7 @@ import com.sun.opengl.util.j2d.TextRenderer;
  * 
  * @author Martin Pecka
  */
-public class JOGLDataViewer extends JPanel implements DataViewer
+public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
 {
 
     /** */
@@ -81,6 +91,8 @@ public class JOGLDataViewer extends JPanel implements DataViewer
     private double[]              maxPoint          = new double[] { 0, 0, 0 };
     /** The matrix used for setting up camera. */
     private double[]              projectionMatrix  = new double[16];
+    /** The task for saving the last rendered image. Executed if it isn't <code>null</code>. */
+    private AfterDrawCallback     saveImageTask     = null;
 
     /**
      * Create a new data viewer using OpenGL for rendering the data set.
@@ -156,6 +168,9 @@ public class JOGLDataViewer extends JPanel implements DataViewer
                 drawGrid(gl, coordinatesSystem.getGrid());
                 drawDataset(gl, coordinatesSystem.getColorProvider());
                 drawAces(gl, glu, coordinatesSystem);
+
+                // call the image saving task
+                processAfterDrawCallbacks(gl);
             }
 
             /**
@@ -523,6 +538,13 @@ public class JOGLDataViewer extends JPanel implements DataViewer
         add(canvas, BorderLayout.CENTER);
     }
 
+    // beacause canvas "eats" the mouse events
+    @Override
+    public synchronized void addMouseListener(MouseListener l)
+    {
+        canvas.addMouseListener(l);
+    }
+
     @Override
     public void update()
     {
@@ -583,4 +605,164 @@ public class JOGLDataViewer extends JPanel implements DataViewer
         this.coordinatesSystem = coordinatesSystem;
     }
 
+    @Override
+    public void saveImage(final File file, final String imageType, final ImageCaptureCallback callback)
+    {
+        final AfterDrawCallback afterDraw = new AfterDrawCallback() {
+            @Override
+            public void call(GL gl)
+            {
+                final BufferedImage img = captureViewer(gl);
+                try {
+                    ImageIO.write(img, imageType, file);
+                } catch (IOException e) {
+                    callback.onException(e);
+                    return;
+                }
+                callback.onOk();
+            }
+        };
+        addAfterDrawCallback(afterDraw);
+        update();
+    }
+
+    @Override
+    public void copyImageToClipboard(final ImageCaptureCallback callback)
+    {
+        final AfterDrawCallback afterDraw = new AfterDrawCallback() {
+            @Override
+            public void call(GL gl)
+            {
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                Transferable transferable = new ImageTransferable(captureViewer(gl));
+                clipboard.setContents(transferable, null);
+                callback.onOk();
+            }
+        };
+        addAfterDrawCallback(afterDraw);
+        update();
+    }
+
+    /**
+     * Add a callback to be called when the redraw of the viewer has finished.
+     * 
+     * @param callback The callback to call.
+     */
+    protected synchronized void addAfterDrawCallback(AfterDrawCallback callback)
+    {
+        if (this.saveImageTask == null)
+            this.saveImageTask = callback;
+        else {
+            AfterDrawCallback call = this.saveImageTask;
+            while (call.next != null)
+                call = call.next;
+            call.next = callback;
+        }
+    }
+
+    /**
+     * Call all the callbacks that should be called after the viewer has been redrawn.
+     * 
+     * @param gl The GL instance used for drawing.
+     */
+    protected void processAfterDrawCallbacks(GL gl)
+    {
+        if (this.saveImageTask != null) {
+            // whole method could be synchronized, but to increase performance, we only use synchronization when we have
+            // something to call... it is no error to call a callback one redraw later if it has been added just before
+            // the entrance to the synchronized section
+            synchronized (this) {
+                AfterDrawCallback callback = this.saveImageTask;
+                while (callback != null) {
+                    callback.call(gl);
+                    callback = callback.next;
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the image the viewer displays.
+     * <p>
+     * Be sure to call this function right after a redraw has been finished.
+     * 
+     * @param gl The GL instance used to draw the viewer.
+     * 
+     * @author Felix Gers (http://www.felixgers.de/teaching/jogl/imagingProg.html)
+     * 
+     * @return The image the viewer displays.
+     */
+    protected BufferedImage captureViewer(GL gl)
+    {
+        ByteBuffer pixelsRGB = ByteBuffer.allocateDirect(getWidth() * getHeight() * 3);
+
+        gl.glReadBuffer(GL.GL_BACK);
+        gl.glPixelStorei(GL.GL_PACK_ALIGNMENT, 1);
+        gl.glReadPixels(0, 0, getWidth(), getHeight(), GL.GL_RGB, GL.GL_UNSIGNED_BYTE, pixelsRGB);
+
+        int[] pixelInts = new int[getWidth() * getHeight()];
+
+        // Convert RGB bytes to ARGB ints with no transparency.
+        // Flip image vertically by reading the
+        // rows of pixels in the byte buffer in reverse
+        // - (0,0) is at bottom left in OpenGL.
+
+        // Points to first byte (red) in each row.
+        int p = getWidth() * getHeight() * 3;
+        int q; // Index into ByteBuffer
+        int i = 0; // Index into target int[]
+        int w3 = getWidth() * 3; // Number of bytes in each row
+
+        for (int row = 0; row < getHeight(); row++) {
+            p -= w3;
+            q = p;
+            for (int col = 0; col < getWidth(); col++) {
+                int iR = pixelsRGB.get(q++);
+                int iG = pixelsRGB.get(q++);
+                int iB = pixelsRGB.get(q++);
+                pixelInts[i++] = 0xFF000000 | ((iR & 0x000000FF) << 16) | ((iG & 0x000000FF) << 8) | (iB & 0x000000FF);
+            }
+        }
+
+        // Create a new BufferedImage from the pixeldata.
+        BufferedImage bufferedImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        bufferedImage.setRGB(0, 0, getWidth(), getHeight(), pixelInts, 0, getWidth());
+
+        return bufferedImage;
+    }
+
+    /**
+     * A callback called once when the viewer is redrawn.
+     * 
+     * @author Martin Pecka
+     */
+    protected abstract static class AfterDrawCallback
+    {
+        /** The next callback to call. */
+        private AfterDrawCallback next = null;
+
+        /**
+         * Perform the callback's task.
+         * 
+         * @param gl The GL instance used for drawing.
+         */
+        public abstract void call(GL gl);
+
+        /**
+         * @return The next.
+         */
+        public AfterDrawCallback getNext()
+        {
+            return next;
+        }
+
+        /**
+         * @param next The next to set.
+         */
+        public void setNext(AfterDrawCallback next)
+        {
+            if (next != null)
+                this.next = next;
+        }
+    }
 }

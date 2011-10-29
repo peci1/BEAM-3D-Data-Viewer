@@ -8,6 +8,10 @@ import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.castToType;
 import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,7 +19,10 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
@@ -25,13 +32,17 @@ import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.source.BandDataSource;
 import org.esa.beam.dataViewer3D.gui.DataViewer;
+import org.esa.beam.dataViewer3D.gui.GraphicalDataViewer;
+import org.esa.beam.dataViewer3D.gui.ImageCaptureCallback;
 import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductNodeList;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductTreeListenerAdapter;
+import org.esa.beam.util.io.BeamFileChooser;
 import org.esa.beam.visat.VisatApp;
+import org.jfree.ui.ExtensionFileFilter;
 
 import com.bc.ceres.swing.TableLayout;
 
@@ -44,15 +55,17 @@ public class DataViewer3DToolView extends AbstractToolView
 {
 
     /** The container for the DataViewer or its placeholder button */
-    protected final JPanel     viewerPane     = new JPanel();
+    protected final JPanel              viewerPane     = new JPanel();
     /** The bands this data viewer uses to generate the source data. */
-    protected final List<Band> involvedBands  = new LinkedList<Band>();
+    protected final List<Band>          involvedBands  = new LinkedList<Band>();
     /** The expression denoting the mask for valid pixels to be read. */
-    protected String           maskExpression = "";
+    protected String                    maskExpression = "";
     /** The maximum number of displayed points. */
-    protected Integer          maxPoints      = null;
+    protected Integer                   maxPoints      = null;
     /** The data viewer used to display the data. */
-    protected final DataViewer dataViewer     = createDataViewer();
+    protected final GraphicalDataViewer dataViewer     = createDataViewer();
+    /** The popup menu of the viewer panel. */
+    protected final JPopupMenu          popupMenu      = new JPopupMenu();
 
     @Override
     protected JComponent createControl()
@@ -90,6 +103,8 @@ public class DataViewer3DToolView extends AbstractToolView
 
         viewerPane.setLayout(new BorderLayout());
         viewerPane.add(noBandsPlaceholderButton, BorderLayout.CENTER);
+
+        setupPopupMenu();
 
         final JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(buttons, BorderLayout.NORTH);
@@ -251,9 +266,9 @@ public class DataViewer3DToolView extends AbstractToolView
      * 
      * @return The data viewer.
      */
-    private final DataViewer createDataViewer()
+    private final GraphicalDataViewer createDataViewer()
     {
-        DataViewer viewer = createDataViewerImpl();
+        GraphicalDataViewer viewer = createDataViewerImpl();
         if (!(viewer instanceof JComponent))
             throw new IllegalStateException(getClass()
                     + ": The viewer returned by createDataViewerImpl() must extend JComponent.");
@@ -267,9 +282,105 @@ public class DataViewer3DToolView extends AbstractToolView
      * 
      * @return The viewer instance.
      */
-    protected DataViewer createDataViewerImpl()
+    protected GraphicalDataViewer createDataViewerImpl()
     {
         return new JOGLDataViewer();
+    }
+
+    /**
+     * Create the right-click popup menu and register the needed mouse listeners.
+     */
+    protected void setupPopupMenu()
+    {
+        final JMenuItem saveImageMenuItem = new JMenuItem("Save as image", KeyEvent.VK_S); /* I18N */
+        saveImageMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final BeamFileChooser fileChooser = new BeamFileChooser();
+                fileChooser.setDialogTitle("Export as image");/* I18N */
+                fileChooser.setFileFilter(new ExtensionFileFilter("PNG images", "png"));
+                if (fileChooser.showSaveDialog(getPaneWindow()) == JFileChooser.APPROVE_OPTION) {
+                    dataViewer.saveImage(fileChooser.getSelectedFile(), "PNG", new ImageCaptureCallback() {
+
+                        @Override
+                        public void onOk()
+                        {
+                            VisatApp.getApp().setStatusBarMessage(
+                                    "Image successfully saved to " + fileChooser.getSelectedFile().toString()); /* I18N */
+                        }
+
+                        @Override
+                        public void onException(Exception e)
+                        {
+                            onFail();
+                            VisatApp.getApp().getLogger().severe(e.toString());
+                        }
+
+                        @Override
+                        public void onFail()
+                        {
+                            VisatApp.getApp()
+                                    .showErrorDialog("Image not saved", "There was an error saving the image."); /* I18N */
+                        }
+
+                    });
+                }
+            }
+        });
+        final JMenuItem copyToClipboardMenuItem = new JMenuItem("Copy to clipboard", KeyEvent.VK_C); /* I18N */
+        copyToClipboardMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                dataViewer.copyImageToClipboard(new ImageCaptureCallback() {
+                    @Override
+                    public void onOk()
+                    {
+                        VisatApp.getApp().setStatusBarMessage("Image copied to the clipboard."); /* I18N */
+                    }
+
+                    @Override
+                    public void onFail()
+                    {
+                        VisatApp.getApp().showErrorDialog("Message not copied",
+                                "There was an error copying the image to the clipboard."); /* I18N */
+                    }
+
+                    @Override
+                    public void onException(Exception e)
+                    {
+                        onFail();
+                        VisatApp.getApp().getLogger().severe(e.toString());
+                    }
+                });
+            }
+        });
+
+        popupMenu.add(saveImageMenuItem);
+        popupMenu.add(copyToClipboardMenuItem);
+
+        ((JComponent) dataViewer).addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mousePressed(MouseEvent e)
+            {
+                maybeShowPopup(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e)
+            {
+                maybeShowPopup(e);
+            }
+
+            private void maybeShowPopup(MouseEvent e)
+            {
+                if (e.isPopupTrigger()) {
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        });
     }
 
     /**
