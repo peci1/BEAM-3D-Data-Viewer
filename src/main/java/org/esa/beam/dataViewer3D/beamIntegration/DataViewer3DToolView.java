@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 
 import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.coordinates.CoordinatesSystem;
@@ -378,11 +380,54 @@ public class DataViewer3DToolView extends AbstractToolView
         popupMenu.add(copyToClipboardMenuItem);
         popupMenu.add(resetViewItem);
 
-        ((JComponent) dataViewer).addMouseListener(new MouseAdapter() {
+        MouseAdapter popupMouseAdapter = new MouseAdapter() {
+            private int       pixelsMoved                      = 0;
+            private final int pixelsMovedToDisablePopupShowing = 25;
+            private boolean   showPopup                        = false;
+            private Integer   prevX                            = null, prevY = null;
+
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e)
+            {
+                showPopup = false;
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e)
+            {
+                if (!SwingUtilities.isRightMouseButton(e))
+                    return;
+
+                int diffX = (prevX == null ? 0 : e.getX() - prevX);
+                int diffY = (prevY == null ? 0 : e.getY() - prevY);
+                prevX = e.getX();
+                prevY = e.getY();
+                pixelsMoved += Math.abs(diffX) + Math.abs(diffY);
+
+                if (pixelsMoved >= pixelsMovedToDisablePopupShowing) {
+                    showPopup = false;
+                    if (popupMenu.isShowing()) {
+                        popupMenu.setVisible(false);
+                    }
+                }
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e)
+            {
+                mouseDragged(e);
+            }
 
             @Override
             public void mousePressed(MouseEvent e)
             {
+                if (!SwingUtilities.isRightMouseButton(e)) {
+                    showPopup = false;
+                    return;
+                }
+
+                pixelsMoved = 0;
+                showPopup = true;
                 maybeShowPopup(e);
             }
 
@@ -394,11 +439,21 @@ public class DataViewer3DToolView extends AbstractToolView
 
             private void maybeShowPopup(MouseEvent e)
             {
-                if (e.isPopupTrigger()) {
+                if (pixelsMoved >= pixelsMovedToDisablePopupShowing) {
+                    showPopup = false;
+                    if (popupMenu.isShowing()) {
+                        popupMenu.setVisible(false);
+                    }
+                    return;
+                }
+                if (showPopup && e.isPopupTrigger()) {
                     popupMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
-        });
+        };
+        ((JComponent) dataViewer).addMouseListener(popupMouseAdapter);
+        ((JComponent) dataViewer).addMouseMotionListener(popupMouseAdapter);
+        ((JComponent) dataViewer).addMouseWheelListener(popupMouseAdapter);
     }
 
     /**

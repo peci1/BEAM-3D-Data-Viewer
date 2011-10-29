@@ -14,6 +14,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
@@ -470,38 +471,38 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             @Override
             public void mousePressed(MouseEvent e)
             {
-                if (SwingUtilities.isLeftMouseButton(e)) {
-                    prevX = e.getX();
-                    prevY = e.getY();
-                }
+                prevX = e.getX();
+                prevY = e.getY();
             }
 
             @Override
             public void mouseDragged(MouseEvent e)
             {
-                if (!SwingUtilities.isLeftMouseButton(e))
-                    return;
-
                 int diffX = (prevX == null ? 0 : e.getX() - prevX);
                 int diffY = (prevY == null ? 0 : e.getY() - prevY);
                 prevX = e.getX();
                 prevY = e.getY();
 
-                if ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) > 0) {
+                final boolean leftDown = SwingUtilities.isLeftMouseButton(e);
+                final boolean rightDown = SwingUtilities.isRightMouseButton(e);
+
+                boolean translate = (rightDown && !leftDown)
+                        || (leftDown && !rightDown && (e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) > 0);
+                if (translate) {
                     // translate
                     Matrix.translate(diffX * maxLength / getWidth() * zoom / Math.pow(zoom, 1d / 4), -diffY * maxLength
                             / getHeight() * zoom / Math.pow(zoom, 1d / 4), 0, transform);
                 } else {
                     // rotate
 
-                    if ((e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == 0) {
+                    if (leftDown && !rightDown && (e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) == 0) {
                         double[] transformedCenter = Matrix.transform(transform, center);
 
                         Matrix.translate(-transformedCenter[0], -transformedCenter[1], -transformedCenter[2], transform);
                         Matrix.rotateX(diffY * pxToAngle, transform);
                         Matrix.rotateY(diffX * pxToAngle, transform);
                         Matrix.translate(transformedCenter[0], transformedCenter[1], transformedCenter[2], transform);
-                    } else {
+                    } else if (leftDown && (rightDown || (e.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) > 0)) {
                         // let the left-right movement define the direction of the rotation
                         int prevSign = zRotSignum;
                         zRotSignum = (int) Math.signum(diffX);
@@ -523,7 +524,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             {
                 // zoom
                 final double multiplier = (100 + e.getWheelRotation()
-                        * ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0 ? 10 : 50)) / 100d;
+                        * ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0
+                                && !SwingUtilities.isRightMouseButton(e) ? 10 : 50)) / 100d;
 
                 if (zoom * multiplier < 0.001)
                     return;
@@ -543,6 +545,13 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     public synchronized void addMouseListener(MouseListener l)
     {
         canvas.addMouseListener(l);
+    }
+
+    // beacause canvas "eats" the mouse events
+    @Override
+    public synchronized void addMouseMotionListener(MouseMotionListener l)
+    {
+        canvas.addMouseMotionListener(l);
     }
 
     @Override
