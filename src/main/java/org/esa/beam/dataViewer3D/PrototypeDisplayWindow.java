@@ -160,7 +160,7 @@ public class PrototypeDisplayWindow extends JFrame
             }
         };
 
-        return AbstractDataSet.createFromDataSources(20000, src1, src2, src3);
+        return AbstractDataSet.createFromDataSources(20000, src1, src2, src3, null);
     }
 
     private CoordinatesSystem createCoordinatesSystem(DataSet dataSet)

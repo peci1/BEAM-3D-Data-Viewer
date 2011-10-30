@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import org.esa.beam.dataViewer3D.data.point.DataPoint;
 import org.esa.beam.dataViewer3D.data.point.DataPoint3D;
@@ -15,6 +16,8 @@ import org.esa.beam.dataViewer3D.data.source.DataSource;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
 import org.esa.beam.util.SkippableIterator;
 import org.esa.beam.util.ValidatingIterator;
+
+import com.bc.ceres.core.ProgressMonitor;
 
 /**
  * A stream-backed 3D data set.
@@ -247,18 +250,21 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
      * 
      * @param maxPoints If not <code>null</code>, specifies the maximum number of points in the resulting set.
      * @param x Source for x values.
-     * @param y Source for x values.
-     * @param z Source for x values.
+     * @param y Source for y values.
+     * @param z Source for z values.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
      * 
      * @return The stream data set created using the given values.
      */
     public static <X extends Number, Y extends Number, Z extends Number> StreamDataSet3D<X, Y, Z> createFromDataSources(
-            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, ProgressMonitor progressMonitor)
     {
         Builder3D<X, Y, Z> builder = StreamDataSet3D.getBuilder();
         builder.setDataSourceX(x).setDataSourceY(y).setDataSourceZ(z);
         if (maxPoints != null)
             builder.setMaxPoints(maxPoints);
+        if (progressMonitor != null)
+            builder.setProgressMonitor(progressMonitor);
         return builder.getResult();
     }
 
@@ -282,6 +288,8 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
         private Integer                     maxPoints    = null;
         /** A factory for creating points from single coordinates. */
         private final PointFactory<X, Y, Z> pointFactory = createPointFactory();
+        /** The progress monitor. */
+        private ProgressMonitor             progressMonitor;
 
         /**
          * When the builder is configured, call this method to get the resulting set.
@@ -317,9 +325,20 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
             NumericType<Y> y;
             NumericType<Z> z;
 
+            if (progressMonitor != null)
+                progressMonitor.beginTask("Loading band data", size); /* I18N */
+
             int i = -1;
             while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext()) {
                 i++;
+
+                if (progressMonitor != null) {
+                    progressMonitor.worked(1);
+                    if (progressMonitor.isCanceled()) {
+                        progressMonitor.done();
+                        throw new CancellationException();
+                    }
+                }
 
                 x = xIt.next();
                 y = yIt.next();
@@ -358,6 +377,9 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
                     usedPointsIndices.add(i);
                 }
             }
+
+            if (progressMonitor != null)
+                progressMonitor.done();
 
             return new StreamDataSet3D<X, Y, Z>(xSource, ySource, zSource, pointFactory, usedPoints, usedPointsIndices,
                     minX, minY, minZ, maxX, maxY, maxZ);
@@ -409,6 +431,14 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
         {
             this.maxPoints = maxPoints;
             return this;
+        }
+
+        /**
+         * @param progressMonitor The progress monitor.
+         */
+        public void setProgressMonitor(ProgressMonitor progressMonitor)
+        {
+            this.progressMonitor = progressMonitor;
         }
 
         /**

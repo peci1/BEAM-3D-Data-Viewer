@@ -15,6 +15,8 @@ import org.esa.beam.dataViewer3D.data.point.SimpleDataPoint4D;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
 
+import com.bc.ceres.core.ProgressMonitor;
+
 /**
  * Abstract data set implementation with the methods common for all subclasses.
  * 
@@ -90,14 +92,15 @@ public abstract class AbstractDataSet implements DataSet
      * @param x The data source for the x coordinate.
      * @param y The data source for the y coordinate.
      * @param z The data source for the z coordinate.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
      * 
      * @return A new 3D data set from the given data sources.
      */
     public static <X extends Number, Y extends Number, Z extends Number> DataSet3D<X, Y, Z> createFromDataSources(
-            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, ProgressMonitor progressMonitor)
     {
         if ((maxPoints == null || maxPoints < StreamDataSet.MAX_SIZE) && x.size() < StreamDataSet.MAX_SIZE) {
-            return StreamDataSet.createFromDataSources(maxPoints, x, y, z);
+            return StreamDataSet.createFromDataSources(maxPoints, x, y, z, progressMonitor);
         } else {
             throw new UnsupportedOperationException(AbstractDataSet.class
                     + ": cannot create data sets with size bigger than Integer.MAX_VALUE yet.");
@@ -113,14 +116,16 @@ public abstract class AbstractDataSet implements DataSet
      * @param y The data source for the y coordinate.
      * @param z The data source for the z coordinate.
      * @param w The data source for the w coordinate.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
      * 
      * @return A new 4D data set from the given data sources.
      */
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> DataSet4D<X, Y, Z, W> createFromDataSources(
-            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w)
+            Integer maxPoints, DataSource<X> x, DataSource<Y> y, DataSource<Z> z, DataSource<W> w,
+            ProgressMonitor progressMonitor)
     {
         if ((maxPoints == null || maxPoints < StreamDataSet.MAX_SIZE) && x.size() < StreamDataSet.MAX_SIZE) {
-            return StreamDataSet.createFromDataSources(maxPoints, x, y, z, w);
+            return StreamDataSet.createFromDataSources(maxPoints, x, y, z, w, progressMonitor);
         } else {
             throw new UnsupportedOperationException(AbstractDataSet.class
                     + ": cannot create data sets with size bigger than Integer.MAX_VALUE yet.");

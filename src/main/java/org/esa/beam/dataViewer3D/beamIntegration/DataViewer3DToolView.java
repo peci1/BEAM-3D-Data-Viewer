@@ -6,6 +6,7 @@ package org.esa.beam.dataViewer3D.beamIntegration;
 import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.castToType;
 
 import java.awt.BorderLayout;
+import java.awt.Dialog.ModalityType;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,15 +16,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import org.esa.beam.dataViewer3D.data.color.ColorProvider;
@@ -40,13 +44,16 @@ import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
 import org.esa.beam.framework.datamodel.Band;
 import org.esa.beam.framework.datamodel.Product;
 import org.esa.beam.framework.datamodel.ProductNodeList;
+import org.esa.beam.framework.ui.AbstractDialog;
 import org.esa.beam.framework.ui.application.support.AbstractToolView;
 import org.esa.beam.framework.ui.product.ProductTreeListenerAdapter;
 import org.esa.beam.util.io.BeamFileChooser;
 import org.esa.beam.visat.VisatApp;
 import org.jfree.ui.ExtensionFileFilter;
 
+import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.swing.TableLayout;
+import com.bc.ceres.swing.progress.DialogProgressMonitor;
 
 /**
  * A tool view that displays the 3D data viewer.
@@ -155,10 +162,11 @@ public class DataViewer3DToolView extends AbstractToolView
      * @param bandX The band used for the x axis.
      * @param bandY The band used for the y axis.
      * @param bandZ The band used for the z axis.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
      */
-    public void setBands(Band bandX, Band bandY, Band bandZ)
+    public void setBands(Band bandX, Band bandY, Band bandZ, ProgressMonitor progressMonitor)
     {
-        setBands(bandX, bandY, bandZ, null);
+        setBands(bandX, bandY, bandZ, null, progressMonitor);
     }
 
     /**
@@ -174,9 +182,27 @@ public class DataViewer3DToolView extends AbstractToolView
      * @param bandY The band used for the y axis.
      * @param bandZ The band used for the z axis.
      * @param bandW The band used for the w axis.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
      */
-    public void setBands(Band bandX, Band bandY, Band bandZ, Band bandW)
+    public void setBands(Band bandX, Band bandY, Band bandZ, Band bandW, ProgressMonitor progressMonitor)
     {
+        DataSet dataSet;
+        try {
+            if (bandW == null) {
+                // TODO allow adjusting the precision
+                dataSet = AbstractDataSet.createFromDataSources(maxPoints, BandDataSource.createForBand(bandX, 10),
+                        BandDataSource.createForBand(bandY, 10), BandDataSource.createForBand(bandZ, 10),
+                        progressMonitor);
+            } else {
+                // TODO allow adjusting the precision
+                dataSet = AbstractDataSet.createFromDataSources(maxPoints, BandDataSource.createForBand(bandX, 10),
+                        BandDataSource.createForBand(bandY, 10), BandDataSource.createForBand(bandZ, 10),
+                        BandDataSource.createForBand(bandW, 10), progressMonitor);
+            }
+        } catch (CancellationException e) {
+            return;
+        }
+
         involvedBands.clear();
         involvedBands.add(bandX);
         involvedBands.add(bandY);
@@ -184,17 +210,6 @@ public class DataViewer3DToolView extends AbstractToolView
         if (bandW != null)
             involvedBands.add(bandW);
 
-        DataSet dataSet;
-        if (bandW == null) {
-            // TODO allow adjusting the precision
-            dataSet = AbstractDataSet.createFromDataSources(maxPoints, BandDataSource.createForBand(bandX, 10),
-                    BandDataSource.createForBand(bandY, 10), BandDataSource.createForBand(bandZ, 10));
-        } else {
-            // TODO allow adjusting the precision
-            dataSet = AbstractDataSet.createFromDataSources(maxPoints, BandDataSource.createForBand(bandX, 10),
-                    BandDataSource.createForBand(bandY, 10), BandDataSource.createForBand(bandZ, 10),
-                    BandDataSource.createForBand(bandW, 10));
-        }
         dataViewer.setDataSet(dataSet);
         updateViewButton.setEnabled(true);
     }
@@ -257,17 +272,34 @@ public class DataViewer3DToolView extends AbstractToolView
      */
     public void updateView()
     {
-        if (!(viewerPane.getComponent(0) instanceof DataViewer)) {
-            // the "select bands" button is displayed
-            viewerPane.removeAll();
-            viewerPane.add((JComponent) dataViewer); // dataViewer is surely a JComponent (see createDataViewer() )
+        updateView(true);
+    }
+
+    /**
+     * Update the view (redraw).
+     * 
+     * @param reloadData If true, also reload the source data.
+     */
+    public void updateView(boolean reloadData)
+    {
+        if (reloadData) {
+            new Thread(new Runnable() {
+                @Override
+                public void run()
+                {
+                    final ProgressMonitor progressMonitor = createBandsLoadingProgressMonitor();
+                    if (involvedBands.size() == 3) {
+                        setBands(involvedBands.get(0), involvedBands.get(2), involvedBands.get(2), progressMonitor);
+                    } else if (involvedBands.size() == 4) {
+                        setBands(involvedBands.get(0), involvedBands.get(2), involvedBands.get(2),
+                                involvedBands.get(3), progressMonitor);
+                    }
+                    dataViewer.update();
+                }
+            }).start();
+        } else {
+            dataViewer.update();
         }
-        if (involvedBands.size() == 3) {
-            setBands(involvedBands.get(0), involvedBands.get(2), involvedBands.get(2));
-        } else if (involvedBands.size() == 4) {
-            setBands(involvedBands.get(0), involvedBands.get(2), involvedBands.get(2), involvedBands.get(3));
-        }
-        dataViewer.update();
     }
 
     /**
@@ -457,6 +489,17 @@ public class DataViewer3DToolView extends AbstractToolView
     }
 
     /**
+     * Return the progress monitor for monitoring the loading of bands.
+     * 
+     * @return The progress monitor for monitoring the loading of bands.
+     */
+    protected ProgressMonitor createBandsLoadingProgressMonitor()
+    {
+        ProgressMonitor progressMonitor = new DialogProgressMonitor(getControl(), "Reading data", ModalityType.MODELESS); /* I18N */
+        return progressMonitor;
+    }
+
+    /**
      * The action for selecting the source bands.
      * 
      * @author Martin Pecka
@@ -476,26 +519,51 @@ public class DataViewer3DToolView extends AbstractToolView
                 products.add(prod);
             }
 
-            BandSelectionDialog bandSelectionDialog = new BandSelectionDialog(VisatApp.getApp(), VisatApp.getApp()
-                    .getSelectedProduct(), products, involvedBands, maskExpression, "");
-            bandSelectionDialog.show();
-
-            maxPoints = bandSelectionDialog.getMaxPoints();
-
-            List<Band> bands = bandSelectionDialog.getBands();
-            if (bands != null && bands.size() > 0) {
-                if (bands.size() == 3) {
-                    setBands(bands.get(0), bands.get(1), bands.get(2));
-                } else if (bands.size() == 4) {
-                    setBands(bands.get(0), bands.get(1), bands.get(2), bands.get(3));
+            final BandSelectionDialog bandSelectionDialog = new BandSelectionDialog(VisatApp.getApp(), VisatApp
+                    .getApp().getSelectedProduct(), products, involvedBands, maskExpression, "");
+            if (bandSelectionDialog.show() == AbstractDialog.ID_OK) {
+                if (!(viewerPane.getComponent(0) instanceof DataViewer)) {
+                    // the "select bands" button is displayed, so we remove it and display a message instead
+                    viewerPane.removeAll();
+                    final JLabel label = new JLabel("Loading..."); /* I18N */
+                    label.setHorizontalAlignment(SwingConstants.CENTER);
+                    viewerPane.add(label, BorderLayout.CENTER);
                 }
-                maskExpression = bandSelectionDialog.getMaskExpression();
-                createCoordinatesSystemForCurrentDataSet(bandSelectionDialog.getxMin(), bandSelectionDialog.getxMax(),
-                        bandSelectionDialog.getXLabel(), bandSelectionDialog.getyMin(), bandSelectionDialog.getyMax(),
-                        bandSelectionDialog.getYLabel(), bandSelectionDialog.getzMin(), bandSelectionDialog.getzMax(),
-                        bandSelectionDialog.getZLabel(), bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax(),
-                        bandSelectionDialog.getWLabel(), bandSelectionDialog.getColorProvider());
-                updateView();
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run()
+                    {
+                        maxPoints = bandSelectionDialog.getMaxPoints();
+
+                        final ProgressMonitor progressMonitor = createBandsLoadingProgressMonitor();
+
+                        final List<Band> bands = bandSelectionDialog.getBands();
+                        if (bands != null && bands.size() > 0) {
+                            if (bands.size() == 3) {
+                                setBands(bands.get(0), bands.get(1), bands.get(2), progressMonitor);
+                            } else if (bands.size() == 4) {
+                                setBands(bands.get(0), bands.get(1), bands.get(2), bands.get(3), progressMonitor);
+                            }
+                            maskExpression = bandSelectionDialog.getMaskExpression();
+                            createCoordinatesSystemForCurrentDataSet(bandSelectionDialog.getxMin(),
+                                    bandSelectionDialog.getxMax(), bandSelectionDialog.getXLabel(),
+                                    bandSelectionDialog.getyMin(), bandSelectionDialog.getyMax(),
+                                    bandSelectionDialog.getYLabel(), bandSelectionDialog.getzMin(),
+                                    bandSelectionDialog.getzMax(), bandSelectionDialog.getZLabel(),
+                                    bandSelectionDialog.getwMin(), bandSelectionDialog.getwMax(),
+                                    bandSelectionDialog.getWLabel(), bandSelectionDialog.getColorProvider());
+
+                            // if the viewer hasn't been displayed yet
+                            if (!(viewerPane.getComponent(0) instanceof DataViewer)) {
+                                viewerPane.removeAll();
+                                viewerPane.add((JComponent) dataViewer); // dataViewer is surely a JComponent (see
+                                                                         // createDataViewer() )
+                            }
+                            updateView(false);
+                        }
+                    }
+                }).start();
             }
         }
     }
@@ -514,7 +582,6 @@ public class DataViewer3DToolView extends AbstractToolView
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            dataViewer.resetTransformation();
             updateView();
         }
 

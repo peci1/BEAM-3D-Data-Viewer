@@ -319,7 +319,7 @@ public class StreamDataSet4DTest
     {
         DataSet4D<Byte, Integer, Double, Float> dataSet = StreamDataSet4D.createFromDataSources(null,
                 Common.getTestDataSourceX(10), Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10),
-                Common.getTestDataSourceW(10));
+                Common.getTestDataSourceW(10), null);
         assertEquals("Wrong data set size reported", 10, dataSet.size());
         assertEquals("Wrong dataset minimum returned", (Byte) Byte.MIN_VALUE, dataSet.getMinX());
         assertEquals("Wrong dataset minimum returned", (Integer) Integer.MIN_VALUE, dataSet.getMinY());
@@ -332,7 +332,7 @@ public class StreamDataSet4DTest
             assertEquals("Wrong histogram count reported", (Integer) 1, histIt.next());
 
         dataSet = StreamDataSet4D.createFromDataSources(null, Common.getTestDataSourceX(12),
-                Common.getTestDataSourceY(12), Common.getTestDataSourceZ(12), Common.getTestDataSourceW(12));
+                Common.getTestDataSourceY(12), Common.getTestDataSourceZ(12), Common.getTestDataSourceW(12), null);
         assertEquals("Wrong data set size reported", 10, dataSet.size());
         assertEquals("Wrong dataset minimum returned", (Byte) Byte.MIN_VALUE, dataSet.getMinX());
         assertEquals("Wrong dataset minimum returned", (Integer) Integer.MIN_VALUE, dataSet.getMinY());
@@ -355,7 +355,7 @@ public class StreamDataSet4DTest
         assertEquals("Wrong histogram count reported", (Integer) 2, histIt.next());
 
         dataSet = StreamDataSet4D.createFromDataSources(5, Common.getTestDataSourceX(10),
-                Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10));
+                Common.getTestDataSourceY(10), Common.getTestDataSourceZ(10), Common.getTestDataSourceW(10), null);
         assertTrue("Wrong data set size reported", 5 >= dataSet.size());
         assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
         assertTrue("Wrong dataset minimum returned", Integer.MIN_VALUE <= dataSet.getMinY());
@@ -367,9 +367,9 @@ public class StreamDataSet4DTest
         for (int i = 0; i < 5; i++)
             assertEquals("Wrong histogram count reported", (Integer) 1, histIt.next());
 
-        dataSet = StreamDataSet4D
-                .createFromDataSources(50000, Common.getTestDataSourceX(100000), Common.getTestDataSourceY(100000),
-                        Common.getTestDataSourceZ(100000), Common.getTestDataSourceW(100000));
+        dataSet = StreamDataSet4D.createFromDataSources(50000, Common.getTestDataSourceX(100000),
+                Common.getTestDataSourceY(100000), Common.getTestDataSourceZ(100000),
+                Common.getTestDataSourceW(100000), null);
         assertTrue("Wrong data set size reported", 50000 >= dataSet.size());
         assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
         assertTrue("Wrong dataset minimum returned", Integer.MIN_VALUE <= dataSet.getMinY());
@@ -382,9 +382,9 @@ public class StreamDataSet4DTest
             assertThat("Wrong histogram count reported", histIt.next(), either(is(1)).or(is(2)).or(is(3)).or(is(4)));
 
         // the test data have 2 equal points for every 12 points
-        dataSet = StreamDataSet4D
-                .createFromDataSources(null, Common.getTestDataSourceX(120000), Common.getTestDataSourceY(120000),
-                        Common.getTestDataSourceZ(120000), Common.getTestDataSourceW(120000));
+        dataSet = StreamDataSet4D.createFromDataSources(null, Common.getTestDataSourceX(120000),
+                Common.getTestDataSourceY(120000), Common.getTestDataSourceZ(120000),
+                Common.getTestDataSourceW(120000), null);
         // we have to take into account the hash collisions, which are allowed to be 5%
         assertTrue("Wrong data set size reported", dataSet.size() > 100000 * 0.95 && dataSet.size() <= 100000);
         assertTrue("Wrong dataset minimum returned", Byte.MIN_VALUE <= dataSet.getMinX());
