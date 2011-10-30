@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
@@ -54,6 +56,7 @@ import org.jfree.ui.ExtensionFileFilter;
 import com.bc.ceres.core.ProgressMonitor;
 import com.bc.ceres.swing.TableLayout;
 import com.bc.ceres.swing.progress.DialogProgressMonitor;
+import com.jidesoft.docking.DockableFrame;
 
 /**
  * A tool view that displays the 3D data viewer.
@@ -146,6 +149,21 @@ public class DataViewer3DToolView extends AbstractToolView
                 noBandsPlaceholderButton.setEnabled(enabled);
             }
         });
+
+        final DockableFrame frame = (DockableFrame) getContext().getPane().getControl();
+        frame.setAvailableButtons(frame.getAvailableButtons() | DockableFrame.BUTTON_MAXIMIZE);
+        MouseListener maximizeListener = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e)
+            {
+                if (e.getClickCount() > 1) {
+                    frame.getDockingManager().toggleMaximizeState(frame.getKey());
+                    e.consume();
+                }
+            }
+        };
+
+        ((JComponent) dataViewer).addMouseListener(maximizeListener);
 
         return mainPanel;
     }
@@ -398,6 +416,16 @@ public class DataViewer3DToolView extends AbstractToolView
             }
         });
 
+        final JMenuItem maximizeItem = new JMenuItem("Toggle maximize the view", KeyEvent.VK_M);
+        maximizeItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                final DockableFrame frame = (DockableFrame) getContext().getPane().getControl();
+                frame.getDockingManager().toggleMaximizeState(frame.getKey());
+            }
+        });
+
         final JMenuItem resetViewItem = new JMenuItem("Reset the view", KeyEvent.VK_R);/* I18N */
         resetViewItem.addActionListener(new ActionListener() {
 
@@ -410,6 +438,9 @@ public class DataViewer3DToolView extends AbstractToolView
 
         popupMenu.add(saveImageMenuItem);
         popupMenu.add(copyToClipboardMenuItem);
+        popupMenu.add(new JSeparator());
+        popupMenu.add(maximizeItem);
+        popupMenu.add(new JSeparator());
         popupMenu.add(resetViewItem);
 
         MouseAdapter popupMouseAdapter = new MouseAdapter() {
