@@ -9,7 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-import org.esa.beam.dataViewer3D.data.point.DataPoint;
 import org.esa.beam.dataViewer3D.data.point.DataPoint4D;
 import org.esa.beam.dataViewer3D.data.point.SimpleDataPoint4D;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
@@ -424,9 +423,7 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
                 if (addProbabilty != null && addProbabilty < 1 && Math.random() > addProbabilty)
                     continue;
 
-                DataPoint point = pointFactory.getPoint(x, y, z, w);
-                int hash = point.hashCode();
-                point = null;
+                int hash = pointFactory.getHashCode(x, y, z, w);
 
                 if (usedPoints.containsKey(hash)) {
                     usedPoints.put(hash, usedPoints.get(hash) + 1);
@@ -545,8 +542,21 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
         public DataPoint4D<NumericType<X>, NumericType<Y>, NumericType<Z>, NumericType<W>> getPoint(NumericType<X> x,
                 NumericType<Y> y, NumericType<Z> z, NumericType<W> w)
         {
-            // TODO maybe substitute with a mutable point in order not to create too much instances
             return new SimpleDataPoint4D<NumericType<X>, NumericType<Y>, NumericType<Z>, NumericType<W>>(x, y, z, w);
+        }
+
+        /**
+         * Return the hashcode of a point from the given values.
+         * 
+         * @param x X coordinate value.
+         * @param y Y coordinate value.
+         * @param z Z coordinate value.
+         * @param w W coordinate value.
+         * @return The point's hashcode.
+         */
+        public int getHashCode(NumericType<X> x, NumericType<Y> y, NumericType<Z> z, NumericType<W> w)
+        {
+            return SimpleDataPoint4D.hashCode(x, y, z, w);
         }
     }
 

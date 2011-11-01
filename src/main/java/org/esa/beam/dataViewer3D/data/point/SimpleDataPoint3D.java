@@ -60,11 +60,28 @@ public final class SimpleDataPoint3D<X extends NumericType<?>, Y extends Numeric
     @Override
     public int hashCode()
     {
+        return hashCode(x, y, z);
+    }
+
+    /**
+     * Return the hash code of a data point with the given coordinates.
+     * <p>
+     * This method is provided for fast computing of the hashcode without creating the data point object.
+     * 
+     * @param x The x coordinate.
+     * @param y The y coordinate.
+     * @param z The z coordinate.
+     * @return The same value as <code>new SampleDataPoint3D(x,y,z).hashCode()</code> for points with the given
+     *         hashcodes.
+     */
+    public static <X extends NumericType<?>, Y extends NumericType<?>, Z extends NumericType<?>> int hashCode(X x, Y y,
+            Z z)
+    {
         final int prime = 16777619;
         int result = -2128831035;
-        result = prime * result + ((x == null) ? 0 : x.hashCode());
-        result = prime * result + ((y == null) ? 0 : y.hashCode());
-        result = prime * result + ((z == null) ? 0 : z.hashCode());
+        result = prime * result + (x == null ? 0 : x.hashCode());
+        result = prime * result + (y == null ? 0 : y.hashCode());
+        result = prime * result + (z == null ? 0 : z.hashCode());
         return result;
     }
 
