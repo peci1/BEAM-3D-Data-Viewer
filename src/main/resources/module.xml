@@ -1,7 +1,7 @@
 <module>
 	<manifestVersion>1.0.0</manifestVersion>
 	<symbolicName>beam-3D-data-viewer</symbolicName>
-	<version>0.5</version>
+	<version>1.0</version>
 	<name>3D Data Viewer</name>
 	<description>
         <![CDATA[
