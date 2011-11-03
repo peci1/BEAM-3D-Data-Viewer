@@ -243,7 +243,10 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                         Number[] ticks = aces[i].getTicks();
                         String[] tickLabels = aces[i].getTickLabels();
 
-                        for (int l = 1; l < ticks.length; l++) {
+                        Rectangle2D lastDrawnTickLabelArea = null;
+
+                        // the cycle goes downward to make sure the last label is drawn always
+                        for (int l = ticks.length - 1; l > 0; l--) {
                             vertices[0] = aces[0].getMin().doubleValue();
                             vertices[1] = aces[1].getMin().doubleValue();
                             vertices[2] = aces[2].getMin().doubleValue();
@@ -278,10 +281,15 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                                 glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix,
                                         0, viewport, 0, point, 0);
                                 textBounds = rend.getBounds(tickLabels[l]);
-                                gl.glTranslated(point[0] - sqrtZoom * textBounds.getWidth(), point[1] - sqrtZoom
-                                        * textBounds.getHeight(), 0);
-                                gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
-                                rend.draw(tickLabels[l], 0, 0);
+                                textBounds.setRect(point[0] - sqrtZoom * textBounds.getWidth(), point[1] - sqrtZoom
+                                        * textBounds.getHeight(), textBounds.getWidth(), textBounds.getHeight());
+                                // don't draw the label if it overlaps a previously drawn label
+                                if (lastDrawnTickLabelArea == null || !lastDrawnTickLabelArea.intersects(textBounds)) {
+                                    gl.glTranslated(textBounds.getX(), textBounds.getY(), 0);
+                                    gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
+                                    lastDrawnTickLabelArea = textBounds;
+                                    rend.draw(tickLabels[l], 0, 0);
+                                }
                             }
                             rend.endRendering();
                         }
