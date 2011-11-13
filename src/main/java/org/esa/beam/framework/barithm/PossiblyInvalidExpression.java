@@ -331,23 +331,36 @@ public class PossiblyInvalidExpression
         if (expression.length() == 0)
             return ProductData.TYPE_UNDEFINED;
 
-        final String expr = removeCastFromExpression(expression);
         int commonType = ProductData.TYPE_UNDEFINED;
+        for (final RasterDataSymbol refRasterDataSymbol : getRasterDataSymbols(expression)) {
+            if (commonType == ProductData.TYPE_UNDEFINED)
+                commonType = refRasterDataSymbol.getRaster().getGeophysicalDataType();
+            else
+                commonType = TypeUtils.getSmallestCommonType(commonType, refRasterDataSymbol.getRaster()
+                        .getGeophysicalDataType());
+        }
+        return commonType;
+    }
+
+    /**
+     * Return all parts of the given expression representing a raster.
+     * 
+     * @param expression The expression to find rasters in.
+     * @return The found rasters.
+     */
+    protected RasterDataSymbol[] getRasterDataSymbols(String expression)
+    {
+        if (expression.length() == 0)
+            return new RasterDataSymbol[0];
+
+        final String expr = removeCastFromExpression(expression);
         final Parser parser = new ParserImpl(namespace, false);
         try {
             final Term term = parser.parse(expr);
-            final RasterDataSymbol[] refRasterDataSymbols = BandArithmetic.getRefRasterDataSymbols(term);
-            for (final RasterDataSymbol refRasterDataSymbol : refRasterDataSymbols) {
-                if (commonType == ProductData.TYPE_UNDEFINED)
-                    commonType = refRasterDataSymbol.getRaster().getGeophysicalDataType();
-                else
-                    commonType = TypeUtils.getSmallestCommonType(commonType, refRasterDataSymbol.getRaster()
-                            .getGeophysicalDataType());
-            }
+            return BandArithmetic.getRefRasterDataSymbols(term);
         } catch (ParseException e) {
-            return ProductData.TYPE_UNDEFINED;
+            return new RasterDataSymbol[0];
         }
-        return commonType;
     }
 
     /**
