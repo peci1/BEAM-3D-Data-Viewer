@@ -172,4 +172,17 @@ public class NumberTypeUtils
             throw new IllegalArgumentException();
         }
     }
+
+    /**
+     * Return true if the number is discrete (Byte, Short, Integer or Long).
+     * 
+     * @param n The number to check.
+     * @return Whether the number is discrete.
+     */
+    public static boolean isDiscrete(Number n)
+    {
+        if (n instanceof Double || n instanceof Float)
+            return false;
+        return true;
+    }
 }
