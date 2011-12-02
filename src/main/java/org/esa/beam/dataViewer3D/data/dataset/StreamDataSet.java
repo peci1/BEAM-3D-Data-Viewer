@@ -9,6 +9,9 @@ import java.util.List;
 
 import org.esa.beam.dataViewer3D.data.point.DataPoint;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
+import org.esa.beam.dataViewer3D.data.source.DataSourceSet;
+import org.esa.beam.dataViewer3D.data.source.DataSourceSet3D;
+import org.esa.beam.dataViewer3D.data.source.DataSourceSet4D;
 import org.esa.beam.util.Guardian;
 import org.esa.beam.util.SkippableIterator;
 
@@ -98,6 +101,59 @@ abstract class StreamDataSet<P extends DataPoint> extends AbstractDataSet
             return new SingleAxisSkippingIterator<N>(source);
         else
             return new SingleAxisIterator<N>(source);
+    }
+
+    /**
+     * Create a new 3D or 4D data set from the given data sources set.
+     * 
+     * @param maxPoints The maximum number of data points in the resulting set (<code>null</code> means the count is
+     *            unbounded).
+     * @param sourceSet The set of sources.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
+     * 
+     * @return A new 3D data set from the given data sources.
+     */
+    public static DataSet createFromDataSources(Integer maxPoints, DataSourceSet sourceSet,
+            ProgressMonitor progressMonitor)
+    {
+        if (sourceSet instanceof DataSourceSet3D<?, ?, ?>)
+            return createFromDataSources(maxPoints, (DataSourceSet3D<?, ?, ?>) sourceSet, progressMonitor);
+        else
+            return createFromDataSources(maxPoints, (DataSourceSet4D<?, ?, ?, ?>) sourceSet, progressMonitor);
+    }
+
+    /**
+     * Create a new 3D data set from the given data sources set.
+     * 
+     * @param maxPoints The maximum number of data points in the resulting set (<code>null</code> means the count is
+     *            unbounded).
+     * @param sourceSet The set of sources.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
+     * 
+     * @return A new 3D data set from the given data sources.
+     */
+    public static <X extends Number, Y extends Number, Z extends Number> DataSet3D<X, Y, Z> createFromDataSources(
+            Integer maxPoints, DataSourceSet3D<X, Y, Z> sourceSet, ProgressMonitor progressMonitor)
+    {
+        return createFromDataSources(maxPoints, sourceSet.getXSource(), sourceSet.getYSource(), sourceSet.getZSource(),
+                progressMonitor);
+    }
+
+    /**
+     * Create a new 4D data set from the given data sources set.
+     * 
+     * @param maxPoints The maximum number of data points in the resulting set (<code>null</code> means the count is
+     *            unbounded).
+     * @param sourceSet The set of sources.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
+     * 
+     * @return A new 3D data set from the given data sources.
+     */
+    public static <X extends Number, Y extends Number, Z extends Number, W extends Number> DataSet4D<X, Y, Z, W> createFromDataSources(
+            Integer maxPoints, DataSourceSet4D<X, Y, Z, W> sourceSet, ProgressMonitor progressMonitor)
+    {
+        return createFromDataSources(maxPoints, sourceSet.getXSource(), sourceSet.getYSource(), sourceSet.getZSource(),
+                sourceSet.getWSource(), progressMonitor);
     }
 
     /**

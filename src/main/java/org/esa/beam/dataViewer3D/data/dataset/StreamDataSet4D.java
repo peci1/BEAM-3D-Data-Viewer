@@ -12,6 +12,7 @@ import java.util.concurrent.CancellationException;
 import org.esa.beam.dataViewer3D.data.point.DataPoint4D;
 import org.esa.beam.dataViewer3D.data.point.SimpleDataPoint4D;
 import org.esa.beam.dataViewer3D.data.source.DataSource;
+import org.esa.beam.dataViewer3D.data.source.DataSourceSet4D;
 import org.esa.beam.dataViewer3D.data.type.NumericType;
 import org.esa.beam.util.SkippableIterator;
 import org.esa.beam.util.ValidatingIterator;
@@ -286,6 +287,24 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
     }
 
     /**
+     * Create a 4D stream data set from the given set of sources. If <code>maxPoints != null</code>, then it defines the
+     * maximum number of points in the created set. If the sources provide more points, then a random subset will be
+     * present in the resulting set (the set could be a little smaller than <code>maxPoints</code>).
+     * 
+     * @param maxPoints If not <code>null</code>, specifies the maximum number of points in the resulting set.
+     * @param dataSourceSet The set of data sources.
+     * @param progressMonitor The progress monitor, which will be notified about progress, if not <code>null</code>.
+     * 
+     * @return The stream data set created using the given values.
+     */
+    public static <X extends Number, Y extends Number, Z extends Number, W extends Number> StreamDataSet4D<X, Y, Z, W> createFromDataSources(
+            Integer maxPoints, DataSourceSet4D<X, Y, Z, W> dataSourceSet, ProgressMonitor progressMonitor)
+    {
+        return createFromDataSources(maxPoints, dataSourceSet.getXSource(), dataSourceSet.getYSource(),
+                dataSourceSet.getZSource(), dataSourceSet.getWSource(), progressMonitor);
+    }
+
+    /**
      * Create a 4D stream data set from the given sources. If <code>maxPoints != null</code>, then it defines the
      * maximum number of points in the created set. If the sources provide more points, then a random subset will be
      * present in the resulting set (the set could be a little smaller than <code>maxPoints</code>).
@@ -431,6 +450,9 @@ public class StreamDataSet4D<X extends Number, Y extends Number, Z extends Numbe
                     usedPoints.put(hash, 1);
                     usedPointsIndices.add(i);
                 }
+
+                if (maxPoints != null && usedPoints.size() >= maxPoints)
+                    break;
             }
 
             if (progressMonitor != null)
