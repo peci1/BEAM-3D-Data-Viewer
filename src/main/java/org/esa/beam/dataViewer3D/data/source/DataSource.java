@@ -21,6 +21,27 @@ public interface DataSource<N extends Number> extends Iterable<N>
      */
     int size();
 
+    /**
+     * @return The minimum value this data source should return, or <code>null</code> if the value set is unbounded from
+     *         the bottom.
+     */
+    N getDefinedMin();
+
+    /**
+     * @return The maximum value this data source should return, or <code>null</code> if the value set is unbounded from
+     *         the top.
+     */
+    N getDefinedMax();
+
+    /**
+     * Check whether this data source is compatible with the other data source in order to be used together to form a
+     * data set.
+     * 
+     * @param other The other data source.
+     * @return Whether this and other data sources are compatible.
+     */
+    boolean isCompatible(DataSource<?> other);
+
     @Override
     ValidatingIterator<N> iterator();
 

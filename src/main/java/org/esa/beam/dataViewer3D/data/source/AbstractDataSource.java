@@ -14,6 +14,21 @@ import org.esa.beam.util.ValidatingIterator;
  */
 public abstract class AbstractDataSource<N extends Number> implements DataSource<N>
 {
+    /** The min and max values this source can return. If <code>null</code>, there is no restriction on min/max values. */
+    protected final N definedMin, definedMax;
+
+    /**
+     * @param definedMin The min and max values this source can return. If <code>null</code>, there is no restriction on
+     *            min/max values.
+     * @param definedMax The min and max values this source can return. If <code>null</code>, there is no restriction on
+     *            min/max values.
+     */
+    public AbstractDataSource(N definedMin, N definedMax)
+    {
+        this.definedMin = definedMin;
+        this.definedMax = definedMax;
+    }
+
     @Override
     public ValidatingIterator<NumericType<N>> numericTypeIterator()
     {
@@ -54,4 +69,23 @@ public abstract class AbstractDataSource<N extends Number> implements DataSource
      * @return The corresponding {@link NumericType}.
      */
     protected abstract NumericType<N> getNumericType(N number);
+
+    @Override
+    public boolean isCompatible(DataSource<?> other)
+    {
+        return size() == other.size();
+    }
+
+    @Override
+    public N getDefinedMin()
+    {
+        return definedMin;
+    }
+
+    @Override
+    public N getDefinedMax()
+    {
+        return definedMax;
+    }
+
 }

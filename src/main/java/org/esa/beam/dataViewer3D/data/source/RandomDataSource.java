@@ -23,6 +23,7 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
 
     public RandomDataSource(int size, N min, N max) throws IllegalArgumentException
     {
+        super(min, max);
         if (size <= 0)
             throw new IllegalArgumentException(getClass() + ": Cannot set non-positive size.");
 
