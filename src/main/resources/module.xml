@@ -47,12 +47,28 @@
 			<mnemonic>3</mnemonic>
 			<accelerator>ctrl alt 3</accelerator>
 			<description>Display 3D histogram of selected bands.</description>
-			<!-- TODO icons <smallIcon>/org/esa/beam/resources/images/icons/PixelInfo16.gif</smallIcon>
-			<largeIcon>/org/esa/beam/resources/images/icons/PixelInfo24.gif</largeIcon>-->
-			<initState>DOCKED</initState>
-			<initSide>WEST</initSide>
+			<!-- TODO icons <smallIcon>/org/esa/beam/resources/images/icons/PixelInfo16.gif</smallIcon> <largeIcon>/org/esa/beam/resources/images/icons/PixelInfo24.gif</largeIcon> -->
+			<initState>HIDDEN</initState>
+			<initSide>SOUTH</initSide>
 			<initIndex>0</initIndex>
 		</toolView>
 	</extension>
 
+<!-- 	<extension point="beam-ui:actions"> -->
+<!-- 		<action> -->
+<!-- 			<parent>data</parent> -->
+<!-- 			<id>open3DScatterPlotDialog</id> -->
+<!-- 			TODO class>org.esa.beam.dataViewer3D.beamIntegration.Open3DScatterPlotDialogAction</class -->
+<!-- 			<class>org.esa.beam.visat.actions.OpenScatterPlotDialogAction</class> -->
+<!-- 			<placeAfter>openHistogramDialog</placeAfter> -->
+<!-- 			<text>3D Scatter Plot...</text> -->
+<!-- 			<mnemonic>L</mnemonic> -->
+<!-- 			<shortDescr>Open 3D scatter plot dialog.</shortDescr> -->
+<!-- 			<description>Open 3D scatter plot dialog.</description> -->
+<!-- 			<context>band,tiePointGrid</context> -->
+<!-- 			<smallIcon>icons/ScatterPlot16.gif</smallIcon> -->
+<!-- 			<largeIcon>icons/ScatterPlot24.gif</largeIcon> -->
+<!-- 			<helpId>scatterplotDialog</helpId> -->
+<!-- 		</action> -->
+<!-- 	</extension> -->
 </module>
