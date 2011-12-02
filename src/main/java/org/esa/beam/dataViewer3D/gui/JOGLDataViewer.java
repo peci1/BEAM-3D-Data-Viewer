@@ -5,12 +5,18 @@ package org.esa.beam.dataViewer3D.gui;
 
 import jahuwaldt.gl.Matrix;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -32,6 +38,7 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.glu.GLU;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 import org.esa.beam.dataViewer3D.data.axis.Axis;
@@ -42,6 +49,8 @@ import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.grid.Grid;
 import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
+import org.esa.beam.framework.ui.GridBagUtils;
+import org.esa.beam.util.Guardian;
 import org.esa.beam.util.ImageTransferable;
 
 import com.sun.opengl.util.j2d.TextRenderer;
@@ -54,19 +63,29 @@ import com.sun.opengl.util.j2d.TextRenderer;
 public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
 {
 
+    static {
+        try {
+            System.setProperty("sun.awt.noerasebackground", "true");
+            JPopupMenu.setDefaultLightWeightPopupEnabled(false);
+        } catch (NoSuchMethodError error) {}
+    }
+
     /** */
     private static final long     serialVersionUID  = -4470588776978542020L;
+
+    /** The target length of the longest side of displayed data in OpenGL units. Used to compute scale. */
+    protected static final double TARGET_SIZE       = 100d;
 
     /** The data set this viewer displays. */
     private DataSet               dataSet           = null;
     /** The coordinates system used for displaying the data and drawing the grid. */
-    private CoordinatesSystem     coordinatesSystem = null;
+    private CoordinatesSystem     coordinatesSystem = CoordinatesSystem.createNoDataCoordinatesSystem();
     /** The OpenGL canvas we draw onto. */
     private final GLCanvas        canvas;
     /** The listener for OpenGL events - handles redrawing and so on. */
     private final GLEventListener glEventListener;
     /** The distance of the near clipping plane (in OpenGL units). */
-    private final double          nearClippingPlane = 1;
+    private final double          nearClippingPlane = 0.00001;
     /** The distance of the far clipping plane (in OpenGL units). */
     private final double          farClippingPlane  = 10000;
     /** Vertical field of view in degrees. */
@@ -76,6 +95,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     private double[]              transform         = Matrix.identity();
     /** The maximum length of an axis. */
     private double                maxLength;
+    /** The basic scale of the displayed data. */
+    private double                scale             = 1d;
     /** The zoom ratio. */
     private double                zoom              = 1d;
     /** The center of the data set (the camera will target it after initialization). */
@@ -95,13 +116,14 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     /** The task for saving the last rendered image. Executed if it isn't <code>null</code>. */
     private AfterDrawCallback     saveImageTask     = null;
 
+    /** This is true while the component is being resized. */
+    private volatile boolean      resizing          = false;
+
     /**
      * Create a new data viewer using OpenGL for rendering the data set.
      */
     public JOGLDataViewer()
     {
-        setLayout(new BorderLayout());
-
         glEventListener = new GLEventListener() {
             @Override
             public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
@@ -146,12 +168,16 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
 
                 gl.glClear(GL.GL_COLOR_BUFFER_BIT);
 
+                if (resizing)
+                    return;
+
                 gl.glMatrixMode(GL.GL_PROJECTION);
                 gl.glLoadIdentity();
 
-                maxLength = NumberTypeUtils.max(coordinatesSystem.getAces()[0].getLength(),
-                        coordinatesSystem.getAces()[1].getLength(), coordinatesSystem.getAces()[2].getLength())
-                        .doubleValue();
+                maxLength = scale
+                        * NumberTypeUtils.max(coordinatesSystem.getAces()[0].getLengthScaled(),
+                                coordinatesSystem.getAces()[1].getLengthScaled(),
+                                coordinatesSystem.getAces()[2].getLengthScaled()).doubleValue();
 
                 // Perspective.
                 float widthHeightRatio = (float) getWidth() / (float) getHeight();
@@ -209,17 +235,18 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                         String originText = "[" + aces[0].getTickLabels()[0] + "; " + aces[1].getTickLabels()[0] + "; "
                                 + aces[2].getTickLabels()[0] + "]";
                         textBounds = boldTextRend.getBounds(originText);
-                        gl.glTranslated(point[0] - sqrtZoom * textBounds.getWidth(),
-                                point[1] - sqrtZoom * textBounds.getHeight(), 0);
-                        gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
+                        gl.glTranslated(point[0] - textBounds.getWidth(), point[1] - textBounds.getHeight(), 0);
+                        // gl.glTranslated(point[0] - sqrtZoom * textBounds.getWidth(),
+                        // point[1] - sqrtZoom * textBounds.getHeight(), 0);
+                        // gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
                         boldTextRend.draw(originText, 0, 0);
                     }
                     boldTextRend.endRendering();
 
                     for (int i = 0; i < 3; i++) {
-                        vertices[0] = aces[0].getMin().doubleValue();
-                        vertices[1] = aces[1].getMin().doubleValue();
-                        vertices[2] = aces[2].getMin().doubleValue();
+                        vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
+                        vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
+                        vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
 
                         glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
                                 viewport, 0, axisStart, 0);
@@ -230,7 +257,7 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                         {
                             gl.glColor3f(0.2f, 0.2f, 0.2f);
                             gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                            vertices[i] = vertices[i] + aces[i].getLength().doubleValue();
+                            vertices[i] = aces[i].applyScaling(aces[i].getMax().doubleValue());
                             gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
                         }
                         gl.glEnd();
@@ -247,27 +274,30 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
 
                         // the cycle goes downward to make sure the last label is drawn always
                         for (int l = ticks.length - 1; l > 0; l--) {
-                            vertices[0] = aces[0].getMin().doubleValue();
-                            vertices[1] = aces[1].getMin().doubleValue();
-                            vertices[2] = aces[2].getMin().doubleValue();
-                            vertices[i] = ticks[l].doubleValue();
+                            vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
+                            vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
+                            vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
+                            vertices[i] = aces[i].applyScaling(ticks[l].doubleValue());
                             gl.glBegin(GL.GL_LINES);
                             {
                                 gl.glColor3f(0.4f, 0.4f, 0.4f);
                                 gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                                vertices[(i + 2) % 3] += aces[i].getTickLength().doubleValue();
+                                final double origValue = vertices[(i + 2) % 3];
+                                vertices[(i + 2) % 3] = aces[(i + 2) % 3].applyScaling(vertices[(i + 2) % 3]
+                                        + aces[i].getTickLength().doubleValue());
                                 gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                                vertices[(i + 2) % 3] -= aces[i].getTickLength().doubleValue();
+                                vertices[(i + 2) % 3] = origValue;
                                 gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                                vertices[(i + 1) % 3] += aces[i].getTickLength().doubleValue();
+                                vertices[(i + 1) % 3] = aces[(i + 1) % 3].applyScaling(vertices[(i + 1) % 3]
+                                        + aces[i].getTickLength().doubleValue());
                                 gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
                             }
                             gl.glEnd();
 
-                            vertices[0] = aces[0].getMin().doubleValue();
-                            vertices[1] = aces[1].getMin().doubleValue();
-                            vertices[2] = aces[2].getMin().doubleValue();
-                            vertices[i] = ticks[l].doubleValue();
+                            vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
+                            vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
+                            vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
+                            vertices[i] = aces[i].applyScaling(ticks[l].doubleValue());
 
                             TextRenderer rend = textRend;
                             if (l == ticks.length - 1)
@@ -286,7 +316,7 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                                 // don't draw the label if it overlaps a previously drawn label
                                 if (lastDrawnTickLabelArea == null || !lastDrawnTickLabelArea.intersects(textBounds)) {
                                     gl.glTranslated(textBounds.getX(), textBounds.getY(), 0);
-                                    gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
+                                    // gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
                                     lastDrawnTickLabelArea = textBounds;
                                     rend.draw(tickLabels[l], 0, 0);
                                 }
@@ -299,10 +329,12 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                         if (labelAngle > 90)
                             labelAngle -= 180;
 
-                        vertices[0] = aces[0].getMin().doubleValue();
-                        vertices[1] = aces[1].getMin().doubleValue();
-                        vertices[2] = aces[2].getMin().doubleValue();
-                        vertices[i] = (aces[i].getMin().doubleValue() + aces[i].getMax().doubleValue()) / 2d;
+                        vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
+                        vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
+                        vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
+                        vertices[i] = aces[i].applyScaling(aces[i].getMin().doubleValue())
+                                + (aces[i].applyScaling(aces[i].getMax().doubleValue()) - aces[i].applyScaling(aces[i]
+                                        .getMin().doubleValue())) / 2d;
 
                         boldTextRend.beginRendering(getWidth(), getHeight());
                         {
@@ -400,46 +432,57 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
              */
             private void drawDataset(GL gl, ColorProvider colorProvider)
             {
-                gl.glBegin(GL.GL_POINTS);
+                if (dataSet == null)
+                    return;
+
+                Iterator<? extends Number> xIt;
+                Iterator<? extends Number> yIt;
+                Iterator<? extends Number> zIt;
+                Iterator<? extends Number> wIt;
+                float maxDistance;
+
                 if (dataSet instanceof DataSet3D<?, ?, ?>) {
                     @SuppressWarnings("unchecked")
                     final DataSet3D<? extends Number, ? extends Number, ? extends Number> dataSet3D = (DataSet3D<? extends Number, ? extends Number, ? extends Number>) dataSet;
 
-                    float maxDistance = (float) Math.sqrt(Math.pow(dataSet3D.getMaxX().doubleValue()
+                    maxDistance = (float) Math.sqrt(Math.pow(dataSet3D.getMaxX().doubleValue()
                             - dataSet3D.getMinX().doubleValue(), 2)
                             + Math.pow(dataSet3D.getMaxY().doubleValue() - dataSet3D.getMinY().doubleValue(), 2)
                             + Math.pow(dataSet3D.getMaxZ().doubleValue() - dataSet3D.getMinZ().doubleValue(), 2));
 
-                    final Iterator<? extends Number> xIt = dataSet3D.xIterator();
-                    final Iterator<? extends Number> yIt = dataSet3D.yIterator();
-                    final Iterator<? extends Number> zIt = dataSet3D.zIterator();
-                    double x, y, z;
-                    while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext()) {
-                        x = xIt.next().doubleValue();
-                        y = yIt.next().doubleValue();
-                        z = zIt.next().doubleValue();
-                        float colorValue = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2))
-                                / maxDistance;
-                        final Color color = colorProvider.getColor(colorValue);
-                        gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
-                        gl.glVertex3d(x, y, z);
-                    }
+                    xIt = dataSet3D.xIterator();
+                    yIt = dataSet3D.yIterator();
+                    zIt = dataSet3D.zIterator();
+                    wIt = null;
                 } else {
                     @SuppressWarnings("unchecked")
                     final DataSet4D<? extends Number, ? extends Number, ? extends Number, ? extends Number> dataSet4D = (DataSet4D<? extends Number, ? extends Number, ? extends Number, ? extends Number>) dataSet;
 
-                    final Iterator<? extends Number> xIt = dataSet4D.xIterator();
-                    final Iterator<? extends Number> yIt = dataSet4D.yIterator();
-                    final Iterator<? extends Number> zIt = dataSet4D.zIterator();
-                    final Iterator<? extends Number> wIt = dataSet4D.wIterator();
+                    xIt = dataSet4D.xIterator();
+                    yIt = dataSet4D.yIterator();
+                    zIt = dataSet4D.zIterator();
+                    wIt = dataSet4D.wIterator();
 
+                    maxDistance = Float.NaN;
+                }
+
+                final Axis<?>[] aces = coordinatesSystem.getAces();
+
+                gl.glBegin(GL.GL_POINTS);
+                {
                     double x, y, z, w;
+                    while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext() && (wIt == null || wIt.hasNext())) {
+                        x = aces[0].applyScaling(xIt.next().doubleValue());
+                        y = aces[1].applyScaling(yIt.next().doubleValue());
+                        z = aces[2].applyScaling(zIt.next().doubleValue());
 
-                    while (xIt.hasNext() && yIt.hasNext() && zIt.hasNext() && wIt.hasNext()) {
-                        x = xIt.next().doubleValue();
-                        y = yIt.next().doubleValue();
-                        z = zIt.next().doubleValue();
-                        w = wIt.next().doubleValue();
+                        Guardian.assertTrue("wIt != null || maxDistance != NaN is required",
+                                wIt != null || !Float.isNaN(maxDistance));
+                        // for 3D data sets, the color value is just the distance from the origin
+                        w = wIt != null ? wIt.next().doubleValue() : Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)
+                                + Math.pow(z, 2))
+                                / maxDistance;
+
                         final Color color = colorProvider.getColor(w);
                         gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
                         gl.glVertex3d(x, y, z);
@@ -460,9 +503,18 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 gl.glBegin(GL.GL_LINES);
                 gl.glColor3f(0.8f, 0.8f, 0.8f);
 
+                final double[] vertex = new double[3];
+                final Axis<?>[] aces = coordinatesSystem.getAces();
                 for (double[] line : grid.getGridLines()) {
-                    gl.glVertex3dv(line, 0);
-                    gl.glVertex3dv(line, 3);
+                    vertex[0] = aces[0].applyScaling(line[0]);
+                    vertex[1] = aces[1].applyScaling(line[1]);
+                    vertex[2] = aces[2].applyScaling(line[2]);
+                    gl.glVertex3dv(vertex, 0);
+
+                    vertex[0] = aces[0].applyScaling(line[3]);
+                    vertex[1] = aces[1].applyScaling(line[4]);
+                    vertex[2] = aces[2].applyScaling(line[5]);
+                    gl.glVertex3dv(vertex, 0);
                 }
                 gl.glEnd();
             }
@@ -470,6 +522,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
 
         GLCapabilities capabilities = new GLCapabilities();
         canvas = new GLCanvas(capabilities);
+        // workaround for canvas not able to shrink: see http://forum.worldwindcentral.com/showthread.php?t=12845
+        canvas.setMinimumSize(new Dimension(0, 0));
         canvas.addGLEventListener(glEventListener);
         MouseAdapter mouseListener = new MouseAdapter() {
             private Integer      prevX      = null, prevY = null;
@@ -497,9 +551,10 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 boolean translate = (rightDown && !leftDown)
                         || (leftDown && !rightDown && (e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) > 0);
                 if (translate) {
+                    final double scaling = zoom / Math.pow(zoom, 1d / 4);
                     // translate
-                    Matrix.translate(diffX * maxLength / getWidth() * zoom / Math.pow(zoom, 1d / 4), -diffY * maxLength
-                            / getHeight() * zoom / Math.pow(zoom, 1d / 4), 0, transform);
+                    Matrix.translate(diffX * maxLength / getWidth() * scaling, -diffY * maxLength / getHeight()
+                            * scaling, 0, transform);
                 } else {
                     // rotate
 
@@ -535,7 +590,7 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                         * ((e.getModifiersEx() & MouseEvent.CTRL_DOWN_MASK) == 0
                                 && !SwingUtilities.isRightMouseButton(e) ? 10 : 50)) / 100d;
 
-                if (zoom * multiplier < 0.001)
+                if (zoom * multiplier < 0.00001)
                     return;
 
                 Matrix.scale(multiplier, multiplier, multiplier, transform);
@@ -545,7 +600,32 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             }
         });
 
-        add(canvas, BorderLayout.CENTER);
+        // workaround not to repaint the canvas while the user resizes the component
+        canvas.addComponentListener(new ComponentAdapter() {
+            private final javax.swing.Timer timer = new javax.swing.Timer(300, null);
+            {
+                timer.setRepeats(false);
+                timer.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e)
+                    {
+                        resizing = false;
+                        update();
+                    }
+                });
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e)
+            {
+                resizing = true;
+                timer.restart();
+            }
+        });
+
+        setLayout(new GridBagLayout());
+        final GridBagConstraints gbc = GridBagUtils.createConstraints("");
+        GridBagUtils.addToPanel(this, canvas, gbc, "weightx=1,weighty=1,gridx=0,gridy=0,fill=BOTH");
     }
 
     // beacause canvas "eats" the mouse events
@@ -614,6 +694,10 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     public void resetTransformation()
     {
         transform = Matrix.translate(-center[0], -center[1], -center[2], Matrix.identity());
+        scale = TARGET_SIZE
+                / Math.sqrt(Math.pow(maxPoint[0] - minPoint[0], 2) + Math.pow(maxPoint[1] - minPoint[1], 2)
+                        + Math.pow(maxPoint[2] - minPoint[2], 2));
+        transform = Matrix.scale(scale, scale, scale, transform);
         zoom = 1;
     }
 
@@ -627,6 +711,7 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     public void setCoordinatesSystem(CoordinatesSystem coordinatesSystem)
     {
         this.coordinatesSystem = coordinatesSystem;
+        resetTransformation();
     }
 
     @Override
