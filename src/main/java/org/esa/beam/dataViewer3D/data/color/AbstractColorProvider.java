@@ -14,12 +14,33 @@ public abstract class AbstractColorProvider implements ColorProvider
 {
 
     /** The bounds. */
-    protected double min, max;
+    protected double  min, max;
     /** The difference between max and min. */
-    protected double difference;
+    protected double  difference;
+    /** Whether the values are discrete. */
+    protected boolean isDiscrete = false;
 
     @Override
     public void setBounds(double min, double max)
+    {
+        isDiscrete = false;
+        innerSetBounds(min, max);
+    }
+
+    @Override
+    public void setBounds(long min, long max)
+    {
+        isDiscrete = true;
+        innerSetBounds(min, max);
+    }
+
+    /**
+     * Set the bounds without changing isDiscrete.
+     * 
+     * @param min The minimum value.
+     * @param max The maximum value.
+     */
+    protected void innerSetBounds(double min, double max)
     {
         if (min > max)
             throw new IllegalArgumentException("min > max");

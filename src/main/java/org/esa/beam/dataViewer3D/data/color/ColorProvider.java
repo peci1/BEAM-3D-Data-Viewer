@@ -23,6 +23,17 @@ public interface ColorProvider
     void setBounds(double min, double max);
 
     /**
+     * Set the bounds of the values this provider can handle. The provider will take the discreteness of the values into
+     * account.
+     * 
+     * @param min The minimum value.
+     * @param max The maximum value.
+     * 
+     * @throw IllegalArgumentException If min &gt; max.
+     */
+    void setBounds(long min, long max);
+
+    /**
      * Return the lower bound.
      * 
      * @return The lower bound.
