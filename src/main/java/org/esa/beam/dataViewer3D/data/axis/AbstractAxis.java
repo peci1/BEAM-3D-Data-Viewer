@@ -3,6 +3,9 @@
  */
 package org.esa.beam.dataViewer3D.data.axis;
 
+import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.castToType;
+import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.multiply;
+
 import org.esa.beam.dataViewer3D.data.axis.tickgenerator.TickGenerator;
 import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
 
@@ -16,52 +19,82 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
 {
 
     /** The label of this axis. */
-    protected String   label;
+    protected String                 label;
 
     /** Minimum and maximum values displayed on the axis. */
-    protected N        min, max;
+    protected N                      min, max;
 
     /** The length of the axis. */
-    protected N        length;
+    protected N                      length;
+
+    protected final TickGenerator<N> tickGenerator;
 
     /** Array of values at which ticks are found. */
-    protected N[]      ticks;
+    protected N[]                    ticks;
 
     /**
      * Array of tick labels - label at index <code>i</code> corresponds to tick <code>i</code>. <code>null</code> value
      * means that the tick has no label.
      */
-    protected String[] tickLabels;
+    protected String[]               tickLabels;
 
     /**
      * The length of a tick (in the same units as is the axis). If set to a high value, this means we want a grid
      * to be drawn.
      */
-    protected N        tickLength;
+    protected N                      tickLength;
+
+    /** The scale of this axis. */
+    protected double                 scale    = 1d;
+
+    /** Whether to use log-scaling. */
+    protected boolean                logScale = false;
 
     /**
      * @param label The label of this axis.
      * @param min Minimum value displayed on the axis.
      * @param max Maximum value displayed on the axis.
      * @param tickGenerator The object that generates all the ticks of this axis.
+     * @param scale The display scale of the axis.
+     * @param logScale Whether to use log-scaling.
      */
-    public AbstractAxis(String label, N min, N max, TickGenerator<N> tickGenerator)
+    public AbstractAxis(String label, N min, N max, TickGenerator<N> tickGenerator, double scale, boolean logScale)
     {
         this.label = label;
         this.min = min;
         this.max = max;
+        if (min == max) {
+            if (min.doubleValue() != 0)
+                this.max = multiply(2, min);
+            else
+                this.max = castToType(max, 1);
+        }
         updateLength();
-        tickGenerator.setBounds(min, max);
-        tickGenerator.generateTicks();
-        this.ticks = tickGenerator.getTicks();
-        this.tickLabels = tickGenerator.getTickLabels();
-        this.tickLength = tickGenerator.getTickLength();
+
+        this.tickGenerator = tickGenerator;
+
+        setScale(scale);
+        setLogScale(logScale);
+
+        updateTicks();
     }
 
     @Override
     public String getLabel()
     {
-        return label;
+        final StringBuilder builder = new StringBuilder(label);
+        if (scale != 1 || logScale) {
+            builder.append(" (");
+            if (scale != 1) {
+                builder.append("scaled ").append(scale).append("-times");
+                if (logScale)
+                    builder.append(", ");
+            }
+            if (logScale)
+                builder.append("log-scaled");
+            builder.append(")");
+        }
+        return builder.toString();
     }
 
     /**
@@ -78,6 +111,31 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     protected void updateLength()
     {
         length = NumberTypeUtils.sub(max, min);
+    }
+
+    @Override
+    public double getScale()
+    {
+        return scale;
+    }
+
+    @Override
+    public void setScale(double scale)
+    {
+        this.scale = scale;
+    }
+
+    @Override
+    public boolean isLogScale()
+    {
+        return logScale;
+    }
+
+    @Override
+    public void setLogScale(boolean logScale)
+    {
+        this.logScale = logScale;
+        this.tickGenerator.setLogScaled(logScale);
     }
 
     @Override
@@ -117,6 +175,12 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     }
 
     @Override
+    public double getLengthScaled()
+    {
+        return Math.abs(applyScaling(max.doubleValue()) - applyScaling(min.doubleValue()));
+    }
+
+    @Override
     public N[] getTicks()
     {
         return ticks;
@@ -138,6 +202,16 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     public void setTickLength(N length)
     {
         this.tickLength = length;
+    }
+
+    @Override
+    public void updateTicks()
+    {
+        tickGenerator.setBounds(this.min, this.max);
+        tickGenerator.generateTicks();
+        this.ticks = tickGenerator.getTicks();
+        this.tickLabels = tickGenerator.getTickLabels();
+        this.tickLength = tickGenerator.getTickLength();
     }
 
     @Override

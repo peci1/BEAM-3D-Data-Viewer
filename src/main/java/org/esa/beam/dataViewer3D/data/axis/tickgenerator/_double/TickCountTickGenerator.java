@@ -51,7 +51,10 @@ public class TickCountTickGenerator extends
         double step = max / (numTicks + 1) - min / (numTicks + 1);
 
         for (int i = 1; i < numTicks + 1; i++) {
-            ticks[i] = min + i * step;
+            if (!isLogScaled())
+                ticks[i] = min + i * step;
+            else
+                ticks[i] = min + (min + (Math.pow(10, i / (numTicks + 1d)) - 1) / 9d * (max - min));
             if (showLabels[i - 1])
                 tickLabels[i] = String.format("%1$1.4G", ticks[i]);
         }

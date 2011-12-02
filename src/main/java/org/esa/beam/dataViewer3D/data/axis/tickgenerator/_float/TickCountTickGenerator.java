@@ -3,6 +3,7 @@
  */
 package org.esa.beam.dataViewer3D.data.axis.tickgenerator._float;
 
+
 /**
  * A tick generator that generates ticks based on the intended number of ticks placing them uniformly along the axis.
  * 
@@ -53,7 +54,10 @@ public class TickCountTickGenerator extends
         double step = difference / (numTicks + 1);
 
         for (int i = 1; i < numTicks + 1; i++) {
-            ticks[i] = (float) (min + i * step);
+            if (!logScaled)
+                ticks[i] = (float) (min + i * step);
+            else
+                ticks[i] = (float) (min + (Math.pow(10, i / (numTicks + 1d)) - 1) / 9d * difference);
             if (showLabels[i - 1])
                 tickLabels[i] = String.format("%1$1.4G", ticks[i]);
         }

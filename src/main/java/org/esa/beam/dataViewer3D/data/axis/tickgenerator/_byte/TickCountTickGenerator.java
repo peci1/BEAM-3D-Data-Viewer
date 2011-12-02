@@ -39,6 +39,12 @@ public class TickCountTickGenerator extends
     @Override
     protected void computeTicks()
     {
+        final int difference = max - min;
+
+        // if we have more ticks than integers between min and max, then we have to create less ticks
+        if (difference < numTicks)
+            numTicks = Math.max(difference - 1, 0);
+
         ticks = new Byte[numTicks + 2];
         tickLabels = new String[numTicks + 2];
 
@@ -48,17 +54,15 @@ public class TickCountTickGenerator extends
         tickLabels[0] = min.toString();
         tickLabels[numTicks + 1] = max.toString();
 
-        int difference = max - min;
-
-        // if we have more ticks than integers between min and max, then we have to create less ticks
-        if (difference < numTicks)
-            numTicks = difference - 1;
-
         double step = ((double) difference) / (numTicks + 1);
 
         for (int i = 1; i < numTicks + 1; i++) {
             // the result will always fit into byte - max is higher than all values
-            ticks[i] = (byte) (min + ((Long) (Math.round(i * step))).byteValue());
+            if (!logScaled)
+                ticks[i] = (byte) (min + ((Long) (Math.round(i * step))).byteValue());
+            else
+                ticks[i] = (byte) (min + (Math.pow(10, i / (numTicks + 1d)) - 1) / 9d * difference);
+
             if (showLabels[i - 1])
                 tickLabels[i] = ticks[i].toString();
         }

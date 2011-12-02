@@ -23,16 +23,35 @@ public abstract class TickGenerator<N extends Number>
 {
 
     /** The minimum and maximum values of the axis this generator generates ticks for. */
-    protected N        min = null, max = null;
+    protected N        min       = null, max = null;
 
     /** Array of values at which ticks are found. */
     protected N[]      ticks;
+
+    /** Whether to use log-scaling. */
+    protected boolean  logScaled = false;
 
     /**
      * Array of tick labels - label at index <code>i</code> corresponds to tick <code>i</code>. <code>null</code> value
      * means that the tick has no label.
      */
     protected String[] tickLabels;
+
+    /**
+     * @return The logScaled.
+     */
+    public boolean isLogScaled()
+    {
+        return logScaled;
+    }
+
+    /**
+     * @param logScaled The logScaled to set.
+     */
+    public void setLogScaled(boolean logScaled)
+    {
+        this.logScaled = logScaled;
+    }
 
     /**
      * @return The ticks.

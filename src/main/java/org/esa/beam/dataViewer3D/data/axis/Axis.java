@@ -40,11 +40,52 @@ public interface Axis<N extends Number>
     N getLength();
 
     /**
+     * Return the scaled length.
+     * 
+     * @return The scaled length.
+     */
+    double getLengthScaled();
+
+    /**
+     * Get the scale that should be applied when drawing this axis' data.
+     * 
+     * @return The scale.
+     */
+    double getScale();
+
+    /**
+     * Set the scale of this axis.
+     * 
+     * @param scale The scale of the axis.
+     */
+    void setScale(double scale);
+
+    /**
      * Is the scale of this axis logarithmic?
      * 
      * @return Whether the scale of this axis is logarithmic.
      */
     boolean isLogScale();
+
+    /**
+     * Set whether to use log-scaling.
+     * 
+     * @param logScale The new value for log-scaling.
+     */
+    void setLogScale(boolean logScale);
+
+    /**
+     * Apply scaling factors to the given coordinate.
+     * 
+     * @param coordinate The coordinate to transform.
+     * @return The scaled coordinate.
+     */
+    double applyScaling(double coordinate);
+
+    /**
+     * Update the ticks.
+     */
+    void updateTicks();
 
     /**
      * Return an array of values at which ticks are found.
