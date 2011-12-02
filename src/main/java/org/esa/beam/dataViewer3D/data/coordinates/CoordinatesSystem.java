@@ -8,7 +8,7 @@ import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.multiply;
 import static org.esa.beam.dataViewer3D.utils.NumberTypeUtils.sub;
 
 import org.esa.beam.dataViewer3D.data.axis.Axis;
-import org.esa.beam.dataViewer3D.data.axis.LinearAxis;
+import org.esa.beam.dataViewer3D.data.axis.ScalableAxis;
 import org.esa.beam.dataViewer3D.data.axis.tickgenerator.TickCountTickGenerator;
 import org.esa.beam.dataViewer3D.data.color.AbstractColorProvider;
 import org.esa.beam.dataViewer3D.data.color.ColorProvider;
@@ -87,6 +87,22 @@ public abstract class CoordinatesSystem
     }
 
     /**
+     * Create a dummy coordinates system.
+     * 
+     * @return The coordinates system.
+     */
+    public static CoordinatesSystem createNoDataCoordinatesSystem()
+    {
+        Axis<Double> axisX = new ScalableAxis<Double>("x", 0d, 5d, TickCountTickGenerator.createForSampleValue(0d, 10));
+        Axis<Double> axisY = new ScalableAxis<Double>("y", 0d, 5d, TickCountTickGenerator.createForSampleValue(0d, 10));
+        Axis<Double> axisZ = new ScalableAxis<Double>("z", 0d, 5d, TickCountTickGenerator.createForSampleValue(0d, 10));
+
+        Grid grid = new GridFromTicks(axisX, axisY, axisZ);
+
+        return new CoordinatesSystem3D<Double, Double, Double>(axisX, axisY, axisZ, grid);
+    }
+
+    /**
      * Create a default implementation of a 3D or 4D coordinate system for the given data set.
      * 
      * @param dataSet The data set to generate coordinate system for.
@@ -109,7 +125,7 @@ public abstract class CoordinatesSystem
     public static <X extends Number, Y extends Number, Z extends Number> CoordinatesSystem3D<X, Y, Z> createDefaultCoordinatesSystem(
             DataSet3D<X, Y, Z> dataSet)
     {
-        return createCoordinatesSystem(null, null, null, null, null, null, dataSet);
+        return createCoordinatesSystem(null, null, 1, false, null, null, 1, false, null, null, 1, false, dataSet);
     }
 
     /**
@@ -118,18 +134,26 @@ public abstract class CoordinatesSystem
      * 
      * @param minX Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxX Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param xScale Scale of the x axis.
+     * @param xLogScale Use log-scaling for x axis?
      * @param minY Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxY Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yScale Scale of the y axis.
+     * @param yLogScale Use log-scaling for y axis?
      * @param minZ Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxZ Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zScale Scale of the z axis.
+     * @param zLogScale Use log-scaling for z axis?
      * 
      * @param dataSet The data set to generate coordinate system for.
      * @return The created coordinates system.
      */
     public static <X extends Number, Y extends Number, Z extends Number> CoordinatesSystem3D<X, Y, Z> createCoordinatesSystem(
-            X minX, X maxX, Y minY, Y maxY, Z minZ, Z maxZ, DataSet3D<X, Y, Z> dataSet)
+            X minX, X maxX, double xScale, boolean xLogScale, Y minY, Y maxY, double yScale, boolean yLogScale, Z minZ,
+            Z maxZ, double zScale, boolean zLogScale, DataSet3D<X, Y, Z> dataSet)
     {
-        return createCoordinatesSystem(minX, maxX, "x", minY, maxY, "y", minZ, maxZ, "z", dataSet);
+        return createCoordinatesSystem(minX, maxX, "x", xScale, xLogScale, minY, maxY, "y", yScale, yLogScale, minZ,
+                maxZ, "z", zScale, zLogScale, dataSet);
     }
 
     /**
@@ -139,27 +163,34 @@ public abstract class CoordinatesSystem
      * @param minX Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxX Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param xLabel Label for x axis.
+     * @param xScale Scale of the x axis.
+     * @param xLogScale Use log-scaling for x axis?
      * @param minY Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxY Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param yLabel Label for y axis.
+     * @param yScale Scale of the y axis.
+     * @param yLogScale Use log-scaling for y axis?
      * @param minZ Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxZ Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param zLabel Label for z axis.
+     * @param zScale Scale of the z axis.
+     * @param zLogScale Use log-scaling for z axis?
      * 
      * @param dataSet The data set to generate coordinate system for.
      * @return The created coordinates system.
      */
     public static <X extends Number, Y extends Number, Z extends Number> CoordinatesSystem3D<X, Y, Z> createCoordinatesSystem(
-            X minX, X maxX, String xLabel, Y minY, Y maxY, String yLabel, Z minZ, Z maxZ, String zLabel,
+            X minX, X maxX, String xLabel, double xScale, boolean xLogScale, Y minY, Y maxY, String yLabel,
+            double yScale, boolean yLogScale, Z minZ, Z maxZ, String zLabel, double zScale, boolean zLogScale,
             DataSet3D<X, Y, Z> dataSet)
     {
-        Axis<X> axisX = new LinearAxis<X>(xLabel, minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
+        Axis<X> axisX = new ScalableAxis<X>(xLabel, minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
                 dataSet.getMinX(), multiply(1.25, sub(dataSet.getMaxX(), dataSet.getMinX()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinX(), 10));
-        Axis<Y> axisY = new LinearAxis<Y>(yLabel, minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
+        Axis<Y> axisY = new ScalableAxis<Y>(yLabel, minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
                 dataSet.getMinY(), multiply(1.25, sub(dataSet.getMaxY(), dataSet.getMinY()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinY(), 10));
-        Axis<Z> axisZ = new LinearAxis<Z>(zLabel, minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
+        Axis<Z> axisZ = new ScalableAxis<Z>(zLabel, minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
                 dataSet.getMinZ(), multiply(1.25, sub(dataSet.getMaxZ(), dataSet.getMinZ()))),
                 TickCountTickGenerator.createForSampleValue(dataSet.getMinZ(), 10));
 
@@ -177,7 +208,8 @@ public abstract class CoordinatesSystem
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> CoordinatesSystem4D<X, Y, Z, W> createDefaultCoordinatesSystem(
             DataSet4D<X, Y, Z, W> dataSet)
     {
-        return createCoordinatesSystem(null, null, null, null, null, null, null, null, dataSet);
+        return createCoordinatesSystem(null, null, 1, false, null, null, 1, false, null, null, 1, false, null, null,
+                false, dataSet);
     }
 
     /**
@@ -186,20 +218,29 @@ public abstract class CoordinatesSystem
      * 
      * @param minX Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxX Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param xScale Scale of the x axis.
+     * @param xLogScale Use log-scaling for x axis?
      * @param minY Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxY Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param yScale Scale of the y axis.
+     * @param yLogScale Use log-scaling for y axis?
      * @param minZ Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxZ Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param zScale Scale of the z axis.
+     * @param zLogScale Use log-scaling for z axis?
      * @param minW Minimum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxW Maximum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
+     * @param wLogScale Use log-scaling for w axis?
      * 
      * @param dataSet The data set to generate coordinate system for.
      * @return The created coordinates system.
      */
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> CoordinatesSystem4D<X, Y, Z, W> createCoordinatesSystem(
-            X minX, X maxX, Y minY, Y maxY, Z minZ, Z maxZ, W minW, W maxW, DataSet4D<X, Y, Z, W> dataSet)
+            X minX, X maxX, double xScale, boolean xLogScale, Y minY, Y maxY, double yScale, boolean yLogScale, Z minZ,
+            Z maxZ, double zScale, boolean zLogScale, W minW, W maxW, boolean wLogScale, DataSet4D<X, Y, Z, W> dataSet)
     {
-        return createCoordinatesSystem(minX, maxX, "x", minY, maxY, "y", minZ, maxZ, "z", minW, maxW, "w", dataSet);
+        return createCoordinatesSystem(minX, maxX, "x", xScale, xLogScale, minY, maxY, "y", yScale, yLogScale, minZ,
+                maxZ, "z", zScale, zLogScale, minW, maxW, "w", wLogScale, dataSet);
     }
 
     /**
@@ -209,35 +250,43 @@ public abstract class CoordinatesSystem
      * @param minX Minimum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxX Maximum value for x axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param xLabel Label for x axis.
+     * @param xScale Scale of the x axis.
+     * @param xLogScale Use log-scaling for x axis?
      * @param minY Minimum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxY Maximum value for y axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param yLabel Label for y axis.
+     * @param yScale Scale of the y axis.
+     * @param yLogScale Use log-scaling for y axis?
      * @param minZ Minimum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxZ Maximum value for z axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param zLabel Label for z axis.
+     * @param zScale Scale of the z axis.
+     * @param zLogScale Use log-scaling for z axis?
      * @param minW Minimum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param maxW Maximum value for w axis. <code>null</code> means to autocompute the value based on the dataset data.
      * @param wLabel Label for w axis.
+     * @param wLogScale Use log-scaling for w axis?
      * 
      * @param dataSet The data set to generate coordinate system for.
      * @return The created coordinates system.
      */
     public static <X extends Number, Y extends Number, Z extends Number, W extends Number> CoordinatesSystem4D<X, Y, Z, W> createCoordinatesSystem(
-            X minX, X maxX, String xLabel, Y minY, Y maxY, String yLabel, Z minZ, Z maxZ, String zLabel, W minW,
-            W maxW, String wLabel, DataSet4D<X, Y, Z, W> dataSet)
+            X minX, X maxX, String xLabel, double xScale, boolean xLogScale, Y minY, Y maxY, String yLabel,
+            double yScale, boolean yLogScale, Z minZ, Z maxZ, String zLabel, double zScale, boolean zLogScale, W minW,
+            W maxW, String wLabel, boolean wLogScale, DataSet4D<X, Y, Z, W> dataSet)
     {
-        Axis<X> axisX = new LinearAxis<X>(xLabel, minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
+        Axis<X> axisX = new ScalableAxis<X>(xLabel, minX != null ? minX : dataSet.getMinX(), maxX != null ? maxX : add(
                 dataSet.getMinX(), multiply(1.25, sub(dataSet.getMaxX(), dataSet.getMinX()))),
-                TickCountTickGenerator.createForSampleValue(dataSet.getMinX(), 10));
-        Axis<Y> axisY = new LinearAxis<Y>(yLabel, minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
+                TickCountTickGenerator.createForSampleValue(dataSet.getMinX(), 10), xScale, xLogScale);
+        Axis<Y> axisY = new ScalableAxis<Y>(yLabel, minY != null ? minY : dataSet.getMinY(), maxY != null ? maxY : add(
                 dataSet.getMinY(), multiply(1.25, sub(dataSet.getMaxY(), dataSet.getMinY()))),
-                TickCountTickGenerator.createForSampleValue(dataSet.getMinY(), 10));
-        Axis<Z> axisZ = new LinearAxis<Z>(zLabel, minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
+                TickCountTickGenerator.createForSampleValue(dataSet.getMinY(), 10), yScale, yLogScale);
+        Axis<Z> axisZ = new ScalableAxis<Z>(zLabel, minZ != null ? minZ : dataSet.getMinZ(), maxZ != null ? maxZ : add(
                 dataSet.getMinZ(), multiply(1.25, sub(dataSet.getMaxZ(), dataSet.getMinZ()))),
-                TickCountTickGenerator.createForSampleValue(dataSet.getMinZ(), 10));
+                TickCountTickGenerator.createForSampleValue(dataSet.getMinZ(), 10), zScale, zLogScale);
         // TODO change to color axis
-        Axis<W> axisW = new LinearAxis<W>(wLabel, minW != null ? minW : dataSet.getMinW(), maxW != null ? maxW
-                : dataSet.getMaxW(), TickCountTickGenerator.createForSampleValue(dataSet.getMinW(), 10));
+        Axis<W> axisW = new ScalableAxis<W>(wLabel, minW != null ? minW : dataSet.getMinW(), maxW != null ? maxW
+                : dataSet.getMaxW(), TickCountTickGenerator.createForSampleValue(dataSet.getMinW(), 10), wLogScale);
 
         Grid grid = new GridFromTicks(axisX, axisY, axisZ);
 
