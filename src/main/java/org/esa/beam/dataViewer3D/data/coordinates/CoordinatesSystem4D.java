@@ -6,6 +6,7 @@ package org.esa.beam.dataViewer3D.data.coordinates;
 import org.esa.beam.dataViewer3D.data.axis.Axis;
 import org.esa.beam.dataViewer3D.data.color.ColorProvider;
 import org.esa.beam.dataViewer3D.data.grid.Grid;
+import org.esa.beam.dataViewer3D.utils.NumberTypeUtils;
 
 /**
  * A 4D coordinates system.
@@ -166,6 +167,9 @@ public class CoordinatesSystem4D<X extends Number, Y extends Number, Z extends N
     public void setColorProvider(ColorProvider colorProvider)
     {
         super.setColorProvider(colorProvider);
-        colorProvider.setBounds(axisW.getMin().doubleValue(), axisW.getMax().doubleValue());
+        if (NumberTypeUtils.isDiscrete(axisW.getMin()))
+            colorProvider.setBounds(axisW.getMin().longValue(), axisW.getMax().longValue());
+        else
+            colorProvider.setBounds(axisW.getMin().doubleValue(), axisW.getMax().doubleValue());
     }
 }
