@@ -36,4 +36,19 @@ public interface GraphicalDataViewer extends DataViewer
      * Reset the transformation (rotation, translation, zoom) to the default state.
      */
     void resetTransformation();
+
+    /**
+     * Zooms the view in.
+     */
+    void zoomIn();
+
+    /**
+     * Zooms the view out.
+     */
+    void zoomOut();
+
+    /**
+     * Zooms the view to see all the data.
+     */
+    void setAutoRange();
 }

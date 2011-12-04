@@ -701,6 +701,37 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
         zoom = 1;
     }
 
+    /**
+     * Zoom by the given multiplier.
+     * 
+     * @param multiplier The rate of zoom.
+     */
+    protected void zoom(double multiplier)
+    {
+        Matrix.scale(multiplier, multiplier, multiplier, transform);
+        zoom *= multiplier;
+
+        update();
+    }
+
+    @Override
+    public void zoomIn()
+    {
+        zoom(1.1);
+    }
+
+    @Override
+    public void zoomOut()
+    {
+        zoom(0.9);
+    }
+
+    @Override
+    public void setAutoRange()
+    {
+        zoom(1 / zoom);
+    }
+
     @Override
     public CoordinatesSystem getCoordinatesSystem()
     {
