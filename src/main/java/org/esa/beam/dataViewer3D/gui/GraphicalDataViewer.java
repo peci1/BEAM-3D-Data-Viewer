@@ -3,6 +3,7 @@
  */
 package org.esa.beam.dataViewer3D.gui;
 
+import java.awt.print.Printable;
 import java.io.File;
 
 /**
@@ -10,7 +11,7 @@ import java.io.File;
  * 
  * @author Martin Pecka
  */
-public interface GraphicalDataViewer extends DataViewer
+public interface GraphicalDataViewer extends DataViewer, Printable
 {
     /**
      * Save the viewer's displayed data to the given file.

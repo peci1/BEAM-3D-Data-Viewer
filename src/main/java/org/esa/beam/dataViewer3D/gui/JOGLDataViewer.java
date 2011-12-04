@@ -8,6 +8,8 @@ import jahuwaldt.gl.Matrix;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Toolkit;
@@ -25,6 +27,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -869,6 +872,33 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
         bufferedImage.setRGB(0, 0, getWidth(), getHeight(), pixelInts, 0, getWidth());
 
         return bufferedImage;
+    }
+
+    @Override
+    public int print(Graphics g, PageFormat pf, int pageIndex)
+    {
+        if (pageIndex != 0) {
+            return NO_SUCH_PAGE;
+        }
+        final Graphics2D g2 = (Graphics2D) g;
+        final int x = (int) pf.getImageableX();
+        final int y = (int) pf.getImageableY();
+        final int w = (int) pf.getImageableWidth();
+        final int h = (int) pf.getImageableHeight();
+        final double widthCoef = getWidth() / (double) w;
+        final double heightCoef = getHeight() / (double) h;
+        final double coef = Math.min(widthCoef, heightCoef);
+        addAfterDrawCallback(new AfterDrawCallback() {
+            @Override
+            public void call(GL gl)
+            {
+                final BufferedImage img = captureViewer(gl);
+                g2.drawImage(img, x, y, (int) (x + coef * getWidth()), (int) (y + coef * getHeight()), 0, 0,
+                        img.getWidth(), img.getHeight(), null);
+            }
+        });
+        update();
+        return PAGE_EXISTS;
     }
 
     /**

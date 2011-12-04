@@ -20,6 +20,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.print.PageFormat;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -1115,7 +1118,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         copyItem.addActionListener(new CopyAction());
 
         final JMenuItem printItem = new JMenuItem("Print...", KeyEvent.VK_R); /* I18N */
-        propertiesItem.addActionListener(new PrintAction());
+        printItem.addActionListener(new PrintAction());
 
         final JMenuItem zoomInItem = new JMenuItem("Zoom in", KeyEvent.VK_I); /* I18N */
         zoomInItem.addActionListener(new ZoomInAction());
@@ -1318,7 +1321,17 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+            PrinterJob job = PrinterJob.getPrinterJob();
+            PageFormat pf = job.defaultPage();
+            PageFormat pf2 = job.pageDialog(pf);
+            job.setPrintable(dataViewer, pf2);
+            if (job.printDialog()) {
+                try {
+                    job.print();
+                } catch (PrinterException ex) {
+                    JOptionPane.showMessageDialog(getControl(), ex);
+                }
+            }
         }
     }
 
