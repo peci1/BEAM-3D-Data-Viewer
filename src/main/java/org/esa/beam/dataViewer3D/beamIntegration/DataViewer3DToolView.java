@@ -21,7 +21,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,7 +60,6 @@ import org.esa.beam.dataViewer3D.data.source.BandDataSource;
 import org.esa.beam.dataViewer3D.data.source.BandDataSourceSet3D;
 import org.esa.beam.dataViewer3D.data.source.BandDataSourceSet4D;
 import org.esa.beam.dataViewer3D.data.source.DataSourceSet;
-import org.esa.beam.dataViewer3D.gui.DataViewer;
 import org.esa.beam.dataViewer3D.gui.GraphicalDataViewer;
 import org.esa.beam.dataViewer3D.gui.ImageCaptureCallback;
 import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
@@ -980,65 +978,34 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         return "";
     }
 
-    protected static JPanel createChartButtonPanel(final DataViewer dataViewer)
+    protected JPanel createChartButtonPanel(final GraphicalDataViewer dataViewer)
     {
         final TableLayout tableLayout = new TableLayout(2);
-        JPanel buttonPane = new JPanel(tableLayout);
+        final JPanel buttonPane = new JPanel(tableLayout);
         buttonPane.setBorder(BorderFactory.createTitledBorder("Plot"));
         final AbstractButton zoomAllButton = ToolButtonFactory.createButton(
                 UIUtils.loadImageIcon("icons/ZoomAll24.gif"), false);
-        zoomAllButton.setToolTipText("Zoom all.");
+        zoomAllButton.setToolTipText("Zoom all."); /* I18N */
         zoomAllButton.setName("zoomAllButton.");
-        zoomAllButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // chartPanel.restoreAutoBounds(); //TODO
-            }
-        });
+        zoomAllButton.addActionListener(new AutoRangeAction());
 
         final AbstractButton propertiesButton = ToolButtonFactory.createButton(
                 UIUtils.loadImageIcon("icons/Edit24.gif"), false);
-        propertiesButton.setToolTipText("Edit properties.");
+        propertiesButton.setToolTipText("Edit properties."); /* I18N */
         propertiesButton.setName("propertiesButton.");
-        propertiesButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // chartPanel.doEditChartProperties(); //TODO
-            }
-        });
+        propertiesButton.addActionListener(new PropertiesAction());
 
         final AbstractButton saveButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Export24.gif"),
                 false);
-        saveButton.setToolTipText("Save chart as image.");
+        saveButton.setToolTipText("Save chart as image."); /* I18N */
         saveButton.setName("saveButton.");
-        saveButton.addActionListener(new ActionListener() {
-            @SuppressWarnings("unused")
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                try {
-                    // chartPanel.doSaveAs(); //TODO
-                    if (false)
-                        throw new IOException();
-                } catch (IOException e1) {
-                    JOptionPane.showMessageDialog((Component) dataViewer, "Could not save chart:\n" + e1.getMessage(),
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
+        saveButton.addActionListener(new SaveAction());
+
         final AbstractButton printButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Print24.gif"),
                 false);
-        printButton.setToolTipText("Print chart.");
+        printButton.setToolTipText("Print chart."); /* I18N */
         printButton.setName("printButton.");
-        printButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // chartPanel.createChartPrintJob(); //TODO
-            }
-        });
+        printButton.addActionListener(new PrintAction());
 
         buttonPane.add(zoomAllButton);
         buttonPane.add(propertiesButton);
@@ -1139,144 +1106,31 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     protected void setupPopupMenu()
     {
         final JMenuItem propertiesItem = new JMenuItem("Properties...", KeyEvent.VK_P); /* I18N */
-        propertiesItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
-            }
-        });
+        propertiesItem.addActionListener(new PropertiesAction());
 
         final JMenuItem saveImageMenuItem = new JMenuItem("Save as...", KeyEvent.VK_S); /* I18N */
-        saveImageMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                final BeamFileChooser fileChooser = new BeamFileChooser();
-                fileChooser.setDialogTitle("Export as image");/* I18N */
-                fileChooser.setFileFilter(new ExtensionFileFilter("PNG images", "png"));
-                if (fileChooser.showSaveDialog(getPaneWindow()) == JFileChooser.APPROVE_OPTION) {
-                    File file = fileChooser.getSelectedFile();
-                    if (!file.getName().toLowerCase().endsWith(".png")) {
-                        final String absolutePathname = file.getAbsolutePath();
-                        file = new File(absolutePathname + ".png");
-                    }
-                    final File targetFile = file;
-                    dataViewer.saveImage(targetFile, "PNG", new ImageCaptureCallback() {
-
-                        @Override
-                        public void onOk()
-                        {
-                            VisatApp.getApp().setStatusBarMessage(
-                                    "Image successfully saved to " + targetFile.toString()); /* I18N */
-                        }
-
-                        @Override
-                        public void onException(Exception e)
-                        {
-                            onFail();
-                            VisatApp.getApp().getLogger().severe(e.toString());
-                        }
-
-                        @Override
-                        public void onFail()
-                        {
-                            VisatApp.getApp()
-                                    .showErrorDialog("Image not saved", "There was an error saving the image."); /* I18N */
-                        }
-
-                    });
-                }
-            }
-        });
+        saveImageMenuItem.addActionListener(new SaveAction());
 
         final JMenuItem copyItem = new JMenuItem("Copy", KeyEvent.VK_C); /* I18N */
-        copyItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                dataViewer.copyImageToClipboard(new ImageCaptureCallback() {
-                    @Override
-                    public void onOk()
-                    {
-                        VisatApp.getApp().setStatusBarMessage("Image copied to the clipboard."); /* I18N */
-                    }
-
-                    @Override
-                    public void onFail()
-                    {
-                        VisatApp.getApp().showErrorDialog("Message not copied",
-                                "There was an error copying the image to the clipboard."); /* I18N */
-                    }
-
-                    @Override
-                    public void onException(Exception e)
-                    {
-                        onFail();
-                        VisatApp.getApp().getLogger().severe(e.toString());
-                    }
-                });
-            }
-        });
+        copyItem.addActionListener(new CopyAction());
 
         final JMenuItem printItem = new JMenuItem("Print...", KeyEvent.VK_R); /* I18N */
-        propertiesItem.addActionListener(new ActionListener() {
+        propertiesItem.addActionListener(new PrintAction());
 
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
-            }
-        });
+        final JMenuItem zoomInItem = new JMenuItem("Zoom in", KeyEvent.VK_I); /* I18N */
+        zoomInItem.addActionListener(new ZoomInAction());
 
-        final JMenuItem zoomInItem = new JMenuItem("Zoom in", KeyEvent.VK_I);
-        zoomInItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                dataViewer.zoomIn();
-            }
-        });
-
-        final JMenuItem zoomOutItem = new JMenuItem("Zoom out", KeyEvent.VK_O);
-        zoomOutItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                dataViewer.zoomOut();
-            }
-        });
+        final JMenuItem zoomOutItem = new JMenuItem("Zoom out", KeyEvent.VK_O); /* I18N */
+        zoomOutItem.addActionListener(new ZoomOutAction());
 
         final JMenuItem autoRangeItem = new JMenuItem("Auto range", KeyEvent.VK_A);/* I18N */
-        autoRangeItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                dataViewer.setAutoRange();
-            }
-        });
+        autoRangeItem.addActionListener(new AutoRangeAction());
 
         final JMenuItem resetViewItem = new JMenuItem("Reset the view", KeyEvent.VK_R);/* I18N */
-        resetViewItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                dataViewer.resetTransformation();
-            }
-        });
+        resetViewItem.addActionListener(new ResetViewAction());
 
         final JMenuItem copyDataItem = new JMenuItem("Copy data to clipboard", KeyEvent.VK_L);/* I18N */
-        copyDataItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
-            }
-        });
+        copyDataItem.addActionListener(new CopyDataAction());
 
         popupMenu.add(propertiesItem);
         popupMenu.add(new JSeparator());
@@ -1382,6 +1236,190 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     {
         ProgressMonitor progressMonitor = new DialogProgressMonitor(getControl(), "Reading data", ModalityType.MODELESS); /* I18N */
         return progressMonitor;
+    }
+
+    /**
+     * Copy the textual data to the clipboard.
+     * 
+     * @author Martin Pecka
+     */
+    protected class CopyDataAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+        }
+    }
+
+    /**
+     * Reset the view transformation.
+     * 
+     * @author Martin Pecka
+     */
+    protected class ResetViewAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            dataViewer.resetTransformation();
+        }
+    }
+
+    /**
+     * Zoom out.
+     * 
+     * @author Martin Pecka
+     */
+    protected class ZoomOutAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            dataViewer.zoomOut();
+        }
+    }
+
+    /**
+     * Zoom in.
+     * 
+     * @author Martin Pecka
+     */
+    protected class ZoomInAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            dataViewer.zoomIn();
+        }
+    }
+
+    /**
+     * Set zoom to view all the data.
+     * 
+     * @author Martin Pecka
+     */
+    protected class AutoRangeAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            dataViewer.setAutoRange();
+        }
+    }
+
+    /**
+     * Print the viewer's view.
+     * 
+     * @author Martin Pecka
+     */
+    protected class PrintAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+        }
+    }
+
+    /**
+     * Show the plot properties dialog.
+     * 
+     * @author Martin Pecka
+     */
+    protected class PropertiesAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+        }
+    }
+
+    /**
+     * Copy the viewr's view into clipboard.
+     * 
+     * @author Martin Pecka
+     */
+    protected class CopyAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            dataViewer.copyImageToClipboard(new ImageCaptureCallback() {
+                @Override
+                public void onOk()
+                {
+                    VisatApp.getApp().setStatusBarMessage("Image copied to the clipboard."); /* I18N */
+                }
+
+                @Override
+                public void onFail()
+                {
+                    VisatApp.getApp().showErrorDialog("Message not copied",
+                            "There was an error copying the image to the clipboard."); /* I18N */
+                }
+
+                @Override
+                public void onException(Exception e)
+                {
+                    onFail();
+                    VisatApp.getApp().getLogger().severe(e.toString());
+                }
+            });
+        }
+    }
+
+    /**
+     * Save the viewer's current view as image.
+     * 
+     * @author Martin Pecka
+     */
+    protected class SaveAction implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            final BeamFileChooser fileChooser = new BeamFileChooser();
+            fileChooser.setDialogTitle("Export as image");/* I18N */
+            fileChooser.setFileFilter(new ExtensionFileFilter("PNG images", "png"));
+            if (fileChooser.showSaveDialog(getPaneWindow()) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                if (!file.getName().toLowerCase().endsWith(".png")) {
+                    final String absolutePathname = file.getAbsolutePath();
+                    file = new File(absolutePathname + ".png");
+                }
+                final File targetFile = file;
+                if (targetFile.exists()) {
+                    final int overwrite = JOptionPane.showConfirmDialog(getControl(), "Overwrite existing file?",
+                            "Overwrite confirmation", JOptionPane.YES_NO_OPTION); /* I18N */
+                    if (overwrite != JOptionPane.YES_OPTION)
+                        return;
+                }
+                dataViewer.saveImage(targetFile, "PNG", new ImageCaptureCallback() {
+
+                    @Override
+                    public void onOk()
+                    {
+                        VisatApp.getApp().setStatusBarMessage("Image successfully saved to " + targetFile.toString()); /* I18N */
+                    }
+
+                    @Override
+                    public void onException(Exception e)
+                    {
+                        onFail();
+                        VisatApp.getApp().getLogger().severe(e.toString());
+                    }
+
+                    @Override
+                    public void onFail()
+                    {
+                        VisatApp.getApp().showErrorDialog("Image not saved", "There was an error saving the image."); /* I18N */
+                    }
+
+                });
+            }
+        }
     }
 
     /**
