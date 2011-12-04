@@ -20,6 +20,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -121,7 +122,6 @@ import com.bc.jexp.Term;
 import com.bc.jexp.impl.DefaultNamespace;
 import com.bc.jexp.impl.NamespaceImpl;
 import com.bc.jexp.impl.ParserImpl;
-import com.jidesoft.docking.DockableFrame;
 
 /**
  * A tool view that displays the 3D data viewer.
@@ -533,7 +533,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     aces[varIndex].setScale((Double) event.getParameter().getValue());
                     aces[varIndex].updateTicks();
                     dataViewer.getCoordinatesSystem().setGrid(new GridFromTicks(aces[0], aces[1], aces[2]));
-                    dataViewer.resetTransformation();
+                    // dataViewer.resetTransformation();
                     dataViewer.update();
                 }
             });
@@ -551,7 +551,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                 aces[varIndex].setLogScale((Boolean) event.getParameter().getValue());
                 aces[varIndex].updateTicks();
                 dataViewer.getCoordinatesSystem().setGrid(new GridFromTicks(aces[0], aces[1], aces[2]));
-                dataViewer.resetTransformation();
+                // dataViewer.resetTransformation();
                 dataViewer.update();
             }
         });
@@ -618,7 +618,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         setNoDataCoordinatesSystem();
         // plot.setNoDataMessage(NO_DATA_MESSAGE);
 
-        // dataViewer.getPopupMenu().add(createCopyDataToClipboardMenuItem());
+        setupPopupMenu();
 
         final TableLayout rightPanelLayout = new TableLayout(1);
         final JPanel rightPanel = new JPanel(rightPanelLayout);
@@ -1138,7 +1138,17 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
      */
     protected void setupPopupMenu()
     {
-        final JMenuItem saveImageMenuItem = new JMenuItem("Save as image", KeyEvent.VK_S); /* I18N */
+        final JMenuItem propertiesItem = new JMenuItem("Properties...", KeyEvent.VK_P); /* I18N */
+        propertiesItem.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+            }
+        });
+
+        final JMenuItem saveImageMenuItem = new JMenuItem("Save as...", KeyEvent.VK_S); /* I18N */
         saveImageMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e)
@@ -1147,13 +1157,19 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                 fileChooser.setDialogTitle("Export as image");/* I18N */
                 fileChooser.setFileFilter(new ExtensionFileFilter("PNG images", "png"));
                 if (fileChooser.showSaveDialog(getPaneWindow()) == JFileChooser.APPROVE_OPTION) {
-                    dataViewer.saveImage(fileChooser.getSelectedFile(), "PNG", new ImageCaptureCallback() {
+                    File file = fileChooser.getSelectedFile();
+                    if (!file.getName().toLowerCase().endsWith(".png")) {
+                        final String absolutePathname = file.getAbsolutePath();
+                        file = new File(absolutePathname + ".png");
+                    }
+                    final File targetFile = file;
+                    dataViewer.saveImage(targetFile, "PNG", new ImageCaptureCallback() {
 
                         @Override
                         public void onOk()
                         {
                             VisatApp.getApp().setStatusBarMessage(
-                                    "Image successfully saved to " + fileChooser.getSelectedFile().toString()); /* I18N */
+                                    "Image successfully saved to " + targetFile.toString()); /* I18N */
                         }
 
                         @Override
@@ -1174,8 +1190,9 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                 }
             }
         });
-        final JMenuItem copyToClipboardMenuItem = new JMenuItem("Copy to clipboard", KeyEvent.VK_C); /* I18N */
-        copyToClipboardMenuItem.addActionListener(new ActionListener() {
+
+        final JMenuItem copyItem = new JMenuItem("Copy", KeyEvent.VK_C); /* I18N */
+        copyItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e)
             {
@@ -1203,13 +1220,41 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             }
         });
 
-        final JMenuItem maximizeItem = new JMenuItem("Toggle maximize the view", KeyEvent.VK_M);
-        maximizeItem.addActionListener(new ActionListener() {
+        final JMenuItem printItem = new JMenuItem("Print...", KeyEvent.VK_R); /* I18N */
+        propertiesItem.addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                final DockableFrame frame = (DockableFrame) getContext().getPane().getControl();
-                frame.getDockingManager().toggleMaximizeState(frame.getKey());
+                JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+            }
+        });
+
+        final JMenuItem zoomInItem = new JMenuItem("Zoom in", KeyEvent.VK_I);
+        zoomInItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                dataViewer.zoomIn();
+            }
+        });
+
+        final JMenuItem zoomOutItem = new JMenuItem("Zoom out", KeyEvent.VK_O);
+        zoomOutItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                dataViewer.zoomOut();
+            }
+        });
+
+        final JMenuItem autoRangeItem = new JMenuItem("Auto range", KeyEvent.VK_A);/* I18N */
+        autoRangeItem.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                dataViewer.setAutoRange();
             }
         });
 
@@ -1223,12 +1268,30 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             }
         });
 
+        final JMenuItem copyDataItem = new JMenuItem("Copy data to clipboard", KeyEvent.VK_L);/* I18N */
+        copyDataItem.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+            }
+        });
+
+        popupMenu.add(propertiesItem);
+        popupMenu.add(new JSeparator());
+        popupMenu.add(copyItem);
         popupMenu.add(saveImageMenuItem);
-        popupMenu.add(copyToClipboardMenuItem);
         popupMenu.add(new JSeparator());
-        popupMenu.add(maximizeItem);
+        popupMenu.add(printItem);
         popupMenu.add(new JSeparator());
+        popupMenu.add(zoomInItem);
+        popupMenu.add(zoomOutItem);
+        popupMenu.add(new JSeparator());
+        popupMenu.add(autoRangeItem);
         popupMenu.add(resetViewItem);
+        popupMenu.add(new JSeparator());
+        popupMenu.add(copyDataItem);
 
         MouseAdapter popupMouseAdapter = new MouseAdapter() {
             private int       pixelsMoved                      = 0;
@@ -1298,6 +1361,10 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                 }
                 if (showPopup && e.isPopupTrigger()) {
                     popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+                final boolean enabled = dataViewer.getDataSet() != null;
+                for (Component item : popupMenu.getComponents()) {
+                    item.setEnabled(enabled);
                 }
             }
         };
