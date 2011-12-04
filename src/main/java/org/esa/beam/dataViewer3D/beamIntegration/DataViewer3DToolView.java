@@ -929,6 +929,8 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     ex = e;
                 }
 
+                computePanel.enableComputeButton();
+
                 if (result != null) {
                     dataViewer.setDataSet(result);
 

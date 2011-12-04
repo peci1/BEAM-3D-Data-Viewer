@@ -74,6 +74,7 @@ class SingleRoiComputePanel extends JPanel
             public void actionPerformed(ActionEvent e)
             {
                 boolean useRoi = useRoiCheckBox.isSelected();
+                computeButton.setEnabled(false);
                 if (useRoi) {
                     String selectedMaskName = (String) maskNameComboBox.getSelectedItem();
                     Mask mask = product.getMaskGroup().get(selectedMaskName);
@@ -109,6 +110,14 @@ class SingleRoiComputePanel extends JPanel
         add(maskNameComboBox);
 
         setRaster(raster);
+    }
+
+    /**
+     * Make the compute button enabled.
+     */
+    public void enableComputeButton()
+    {
+        computeButton.setEnabled(true);
     }
 
     void setRaster(final RasterDataNode newRaster)
