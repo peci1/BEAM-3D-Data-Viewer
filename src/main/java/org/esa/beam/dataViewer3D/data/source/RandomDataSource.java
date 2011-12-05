@@ -79,4 +79,10 @@ public abstract class RandomDataSource<N extends Number> extends AbstractDataSou
         return size;
     }
 
+    @Override
+    public String getName()
+    {
+        return "random"; /* I18N */
+    }
+
 }

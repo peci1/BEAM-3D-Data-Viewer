@@ -71,6 +71,23 @@ public abstract class ArrayDataSet extends AbstractDataSet
         return Arrays.asList(histogram).iterator();
     }
 
+    @Override
+    public String getSourceName(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return "x";
+            case 1:
+                return "y";
+            case 2:
+                return "z";
+            case 3:
+                return "w";
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
     /**
      * Create a new 3D or 4D data set from the given data sources set.
      * 

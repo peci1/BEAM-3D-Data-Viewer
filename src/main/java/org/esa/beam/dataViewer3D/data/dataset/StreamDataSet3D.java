@@ -233,6 +233,51 @@ public class StreamDataSet3D<X extends Number, Y extends Number, Z extends Numbe
         return maxZ;
     }
 
+    @Override
+    public double getMin(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return getMinX().doubleValue();
+            case 1:
+                return getMinY().doubleValue();
+            case 2:
+                return getMinZ().doubleValue();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
+    @Override
+    public double getMax(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return getMaxX().doubleValue();
+            case 1:
+                return getMaxY().doubleValue();
+            case 2:
+                return getMaxZ().doubleValue();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
+    @Override
+    public String getSourceName(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return xSource.getName();
+            case 1:
+                return ySource.getName();
+            case 2:
+                return zSource.getName();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
     /**
      * Return a builder able to build this class.
      * 

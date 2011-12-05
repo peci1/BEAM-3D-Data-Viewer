@@ -27,6 +27,7 @@ import org.esa.beam.dataViewer3D.data.type.NumericType;
 import org.esa.beam.dataViewer3D.data.type.ShortType;
 import org.esa.beam.framework.datamodel.ProductData;
 import org.esa.beam.framework.datamodel.RasterDataNode;
+import org.esa.beam.framework.datamodel.VirtualBand;
 import org.esa.beam.util.Guardian;
 import org.esa.beam.util.SkippableIterator;
 import org.esa.beam.util.ValidatingIterator;
@@ -299,6 +300,14 @@ public class BandDataSource<N extends Number> implements DataSource<N>
     public int size()
     {
         return imageRect.width * imageRect.height;
+    }
+
+    @Override
+    public String getName()
+    {
+        if (band instanceof VirtualBand)
+            return ((VirtualBand) band).getExpression();
+        return band.getName();
     }
 
     /**

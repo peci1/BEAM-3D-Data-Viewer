@@ -22,6 +22,30 @@ public interface DataSet extends Iterable<DataPoint>
     int size();
 
     /**
+     * Return the minimum value for the given dimension.
+     * 
+     * @param dimension The requested dimension (0 for x and so).
+     * @return The minimum value of the source of the data set.
+     */
+    double getMin(int dimension);
+
+    /**
+     * Return the maximum value for the given dimension.
+     * 
+     * @param dimension The requested dimension (0 for x and so).
+     * @return The maximum value of the source of the data set.
+     */
+    double getMax(int dimension);
+
+    /**
+     * Return the name of the source of the given dimension.
+     * 
+     * @param dimension The dimension to get name of.
+     * @return The name of the dimension's source.
+     */
+    String getSourceName(int dimension);
+
+    /**
      * Return the iterator that iterates through the data points and returns them as specific points.
      * 
      * @return The iterator that iterates through the data points and returns them as specific points.

@@ -283,4 +283,35 @@ public class ArrayDataSet3D<X extends Number, Y extends Number, Z extends Number
     {
         return data[maxZIndex].getZ().getNumber();
     }
+
+    @Override
+    public double getMin(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return getMinX().doubleValue();
+            case 1:
+                return getMinY().doubleValue();
+            case 2:
+                return getMinZ().doubleValue();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
+    @Override
+    public double getMax(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return getMaxX().doubleValue();
+            case 1:
+                return getMaxY().doubleValue();
+            case 2:
+                return getMaxZ().doubleValue();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
 }

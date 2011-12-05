@@ -9,6 +9,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dialog.ModalityType;
 import java.awt.GridBagConstraints;
 import java.awt.event.ActionEvent;
@@ -25,6 +26,7 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -59,10 +61,13 @@ import org.esa.beam.dataViewer3D.data.dataset.DataSet;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet3D;
 import org.esa.beam.dataViewer3D.data.dataset.DataSet4D;
 import org.esa.beam.dataViewer3D.data.grid.GridFromTicks;
+import org.esa.beam.dataViewer3D.data.point.DataPoint3D;
+import org.esa.beam.dataViewer3D.data.point.DataPoint4D;
 import org.esa.beam.dataViewer3D.data.source.BandDataSource;
 import org.esa.beam.dataViewer3D.data.source.BandDataSourceSet3D;
 import org.esa.beam.dataViewer3D.data.source.BandDataSourceSet4D;
 import org.esa.beam.dataViewer3D.data.source.DataSourceSet;
+import org.esa.beam.dataViewer3D.data.type.NumericType;
 import org.esa.beam.dataViewer3D.gui.GraphicalDataViewer;
 import org.esa.beam.dataViewer3D.gui.ImageCaptureCallback;
 import org.esa.beam.dataViewer3D.gui.JOGLDataViewer;
@@ -103,6 +108,7 @@ import org.esa.beam.framework.ui.product.VectorDataLayer;
 import org.esa.beam.framework.ui.product.VectorDataLayerFilterFactory;
 import org.esa.beam.framework.ui.tool.ToolButtonFactory;
 import org.esa.beam.util.Debug;
+import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.UniversalDocumentListener;
 import org.esa.beam.util.io.BeamFileChooser;
 import org.esa.beam.visat.VisatApp;
@@ -959,7 +965,8 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     logScaleParams[X_VAR].setValue(rasterX.isLog10Scaled(), null);
                     logScaleParams[Y_VAR].setValue(rasterY.isLog10Scaled(), null);
                     logScaleParams[Z_VAR].setValue(rasterZ.isLog10Scaled(), null);
-                    logScaleParams[W_VAR].setValue(rasterW.isLog10Scaled(), null);
+                    if (rasterW != null)
+                        logScaleParams[W_VAR].setValue(rasterW.isLog10Scaled(), null);
                 } else {
                     if (ex != null) {
                         JOptionPane.showMessageDialog(getControl(),
@@ -978,9 +985,77 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         swingWorker.execute();
     }
 
+    /**
+     * @return The textual summary of the displayed data.
+     */
     protected String getDataAsText()
     {
-        return "";
+        final StringBuffer sb = new StringBuffer(dataViewer.getDataSet().size());
+
+        final Product product = getRaster(X_VAR).getProduct();
+        sb.append("Product name:\t").append(product.getName()).append("\n");
+
+        final int[] vars = (getRaster(W_VAR) != null) ? new int[] { X_VAR, Y_VAR, Z_VAR, W_VAR } : new int[] { X_VAR,
+                Y_VAR, Z_VAR };
+        for (int varIndex : vars) {
+            if (getRaster(varIndex).getProduct() != product)
+                sb.append("Dataset ").append(VAR_NAMES[varIndex]).append(" product name:\t")
+                        .append(getRaster(varIndex).getProduct().getName()).append("\n");
+            sb.append("Dataset ").append(VAR_NAMES[varIndex]).append(" name:\t")
+                    .append(dataViewer.getDataSet().getSourceName(varIndex)).append("\n");
+        }
+
+        for (int varIndex : vars) {
+            sb.append('\n');
+            sb.append(dataViewer.getDataSet().getSourceName(varIndex)).append(" minimum:\t")
+                    .append(dataViewer.getDataSet().getMin(varIndex)).append("\t")
+                    .append(getRaster(varIndex).getUnit()).append("\n");
+            sb.append(dataViewer.getDataSet().getSourceName(varIndex)).append(" maximum:\t")
+                    .append(dataViewer.getDataSet().getMax(varIndex)).append("\t")
+                    .append(getRaster(varIndex).getUnit()).append("\n");
+        }
+        sb.append('\n');
+
+        sb.append("Displayed points:\n");
+        for (int varIndex : vars) {
+            sb.append(dataViewer.getDataSet().getSourceName(varIndex));
+            sb.append('\t');
+        }
+        sb.append('\n');
+
+        if (getRaster(W_VAR) != null) {
+            DataPoint4D<NumericType<?>, NumericType<?>, NumericType<?>, NumericType<?>> point = null;
+            @SuppressWarnings("unchecked")
+            final Iterator<DataPoint4D<NumericType<?>, NumericType<?>, NumericType<?>, NumericType<?>>> it = (Iterator<DataPoint4D<NumericType<?>, NumericType<?>, NumericType<?>, NumericType<?>>>) dataViewer
+                    .getDataSet().pointIterator();
+            while (it.hasNext()) {
+                point = it.next();
+                sb.append(point.getX());
+                sb.append('\t');
+                sb.append(point.getY());
+                sb.append('\t');
+                sb.append(point.getZ());
+                sb.append('\t');
+                sb.append(point.getW());
+                sb.append('\n');
+            }
+        } else {
+            DataPoint3D<NumericType<?>, NumericType<?>, NumericType<?>> point = null;
+            @SuppressWarnings("unchecked")
+            final Iterator<DataPoint3D<NumericType<?>, NumericType<?>, NumericType<?>>> it = (Iterator<DataPoint3D<NumericType<?>, NumericType<?>, NumericType<?>>>) dataViewer
+                    .getDataSet().pointIterator();
+            while (it.hasNext()) {
+                point = it.next();
+                sb.append(point.getX());
+                sb.append('\t');
+                sb.append(point.getY());
+                sb.append('\t');
+                sb.append(point.getZ());
+                sb.append('\n');
+            }
+        }
+
+        return sb.toString();
     }
 
     protected JPanel createChartButtonPanel(final GraphicalDataViewer dataViewer)
@@ -1253,7 +1328,16 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+            final Cursor oldCursor = getControl().getCursor();
+            try {
+                getControl().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                final String dataAsText = getDataAsText();
+                if (dataAsText != null) {
+                    SystemUtils.copyToClipboard(dataAsText);
+                }
+            } finally {
+                getControl().setCursor(oldCursor);
+            }
         }
     }
 

@@ -42,6 +42,11 @@ public interface DataSource<N extends Number> extends Iterable<N>
      */
     boolean isCompatible(DataSource<?> other);
 
+    /**
+     * @return The name of the source.
+     */
+    String getName();
+
     @Override
     ValidatingIterator<N> iterator();
 

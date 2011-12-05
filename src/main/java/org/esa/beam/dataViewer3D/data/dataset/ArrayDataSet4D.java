@@ -325,4 +325,38 @@ public class ArrayDataSet4D<X extends Number, Y extends Number, Z extends Number
     {
         return data[maxWIndex].getW().getNumber();
     }
+
+    @Override
+    public double getMin(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return getMinX().doubleValue();
+            case 1:
+                return getMinY().doubleValue();
+            case 2:
+                return getMinZ().doubleValue();
+            case 3:
+                return getMinW().doubleValue();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
+
+    @Override
+    public double getMax(int dimension)
+    {
+        switch (dimension) {
+            case 0:
+                return getMaxX().doubleValue();
+            case 1:
+                return getMaxY().doubleValue();
+            case 2:
+                return getMaxZ().doubleValue();
+            case 3:
+                return getMaxW().doubleValue();
+            default:
+                throw new IndexOutOfBoundsException();
+        }
+    }
 }
