@@ -658,6 +658,24 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     }
 
     @Override
+    public void setDataSetToEmpty(double minX, double maxX, double minY, double maxY, double minZ, double maxZ)
+    {
+        this.dataSet = null;
+        minPoint[0] = minX;
+        minPoint[1] = minY;
+        minPoint[2] = minZ;
+
+        maxPoint[0] = maxX;
+        maxPoint[1] = maxY;
+        maxPoint[2] = maxZ;
+
+        center[0] = minX + (maxX - minX) / 2;
+        center[1] = minY + (maxY - minY) / 2;
+        center[2] = minZ + (maxZ - minZ) / 2;
+        resetTransformation();
+    }
+
+    @Override
     public void setDataSet(DataSet dataSet)
     {
         this.dataSet = dataSet;

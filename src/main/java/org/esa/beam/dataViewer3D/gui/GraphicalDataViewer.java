@@ -34,6 +34,18 @@ public interface GraphicalDataViewer extends DataViewer, Printable
     void copyImageToClipboard(final ImageCaptureCallback callback);
 
     /**
+     * Set the data set to be empty with the given fictive bounds.
+     * 
+     * @param minX The fictive minimum x value.
+     * @param maxX The fictive maximum x value.
+     * @param minY The fictive minimum y value.
+     * @param maxY The fictive maximum y value.
+     * @param minZ The fictive minimum z value.
+     * @param maxZ The fictive maximum z value.
+     */
+    void setDataSetToEmpty(double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
+
+    /**
      * Reset the transformation (rotation, translation, zoom) to the default state.
      */
     void resetTransformation();

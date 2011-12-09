@@ -1103,6 +1103,10 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     public void setNoDataCoordinatesSystem()
     {
         dataViewer.setCoordinatesSystem(CoordinatesSystem.createNoDataCoordinatesSystem());
+        final Axis<?>[] aces = dataViewer.getCoordinatesSystem().getAces();
+        dataViewer.setDataSetToEmpty(aces[X_VAR].getMin().doubleValue(), aces[X_VAR].getMax().doubleValue(),
+                aces[Y_VAR].getMin().doubleValue(), aces[Y_VAR].getMax().doubleValue(), aces[Z_VAR].getMin()
+                        .doubleValue(), aces[Z_VAR].getMax().doubleValue());
         dataViewer.getCoordinatesSystem().setShowGrid(true);
     }
 
