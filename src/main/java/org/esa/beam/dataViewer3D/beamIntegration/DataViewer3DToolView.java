@@ -189,6 +189,8 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     protected VectorDataNode            vectorData;
     /** Wheteher this.vectorData has changed since last call to upadteUI(). */
     protected boolean                   vectorDataChanged;
+    /** True when the data set has changed and the view hasn't been updated since then. */
+    protected boolean                   dataSetChanged;
 
     /** The array of all active products compatible with the selected one. */
     protected Product[]                 compatibleProducts   = new Product[0];
@@ -207,6 +209,9 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     private final InternalFrameListener internalFrameListener;
     /** The listener added to the selected product. */
     private final ProductNodeListener   productNodeListener;
+
+    /** Chart panel buttons. */
+    protected AbstractButton            printButton, saveButton, propertiesButton, zoomAllButton;
 
     public DataViewer3DToolView()
     {
@@ -755,6 +760,11 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             updateComputePane();
         }
 
+        if (dataSetChanged) {
+            updateChartButtonsState();
+            dataSetChanged = false;
+        }
+
         updateUIState(X_VAR);
         updateUIState(Y_VAR);
         updateUIState(Z_VAR);
@@ -985,7 +995,9 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     dataViewer.setDataSet(null);
                     setNoDataCoordinatesSystem();
                 }
+                dataSetChanged = true;
                 dataViewer.update();
+                updateUI();
             }
         };
         swingWorker.execute();
@@ -1069,26 +1081,23 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         final TableLayout tableLayout = new TableLayout(2);
         final JPanel buttonPane = new JPanel(tableLayout);
         buttonPane.setBorder(BorderFactory.createTitledBorder("Plot"));
-        final AbstractButton zoomAllButton = ToolButtonFactory.createButton(
-                UIUtils.loadImageIcon("icons/ZoomAll24.gif"), false);
+
+        zoomAllButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/ZoomAll24.gif"), false);
         zoomAllButton.setToolTipText("Zoom all."); /* I18N */
         zoomAllButton.setName("zoomAllButton.");
         zoomAllButton.addActionListener(new AutoRangeAction());
 
-        final AbstractButton propertiesButton = ToolButtonFactory.createButton(
-                UIUtils.loadImageIcon("icons/Edit24.gif"), false);
+        propertiesButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Edit24.gif"), false);
         propertiesButton.setToolTipText("Edit properties."); /* I18N */
         propertiesButton.setName("propertiesButton.");
         propertiesButton.addActionListener(new PropertiesAction());
 
-        final AbstractButton saveButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Export24.gif"),
-                false);
+        saveButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Export24.gif"), false);
         saveButton.setToolTipText("Save chart as image."); /* I18N */
         saveButton.setName("saveButton.");
         saveButton.addActionListener(new SaveAction());
 
-        final AbstractButton printButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Print24.gif"),
-                false);
+        printButton = ToolButtonFactory.createButton(UIUtils.loadImageIcon("icons/Print24.gif"), false);
         printButton.setToolTipText("Print chart."); /* I18N */
         printButton.setName("printButton.");
         printButton.addActionListener(new PrintAction());
@@ -1097,7 +1106,21 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         buttonPane.add(propertiesButton);
         buttonPane.add(saveButton);
         buttonPane.add(printButton);
+
+        updateChartButtonsState();
         return buttonPane;
+    }
+
+    /**
+     * Update the state of the chart buttons based on the state of other things.
+     */
+    protected void updateChartButtonsState()
+    {
+        zoomAllButton.setEnabled(true);
+        final boolean enable = dataViewer.getDataSet() != null;
+        printButton.setEnabled(enable);
+        saveButton.setEnabled(enable);
+        propertiesButton.setEnabled(enable);
     }
 
     /**
