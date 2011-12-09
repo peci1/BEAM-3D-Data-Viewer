@@ -138,7 +138,10 @@ import com.bc.jexp.impl.ParserImpl;
 public class DataViewer3DToolView extends AbstractToolView implements SingleRoiComputePanel.ComputeMask
 {
 
-    private static final String         NO_DATA_MESSAGE      = "No scatter plot computed yet.";
+    private static final String         NO_DATA_MESSAGE      = "No scatter plot computed yet.\n"
+                                                                     + "Use wheel for zooming (Ctrl+wheel or right mouse button+wheel - fast zoom).\n"
+                                                                     + "Use left or left+right mouse button to rotate.\n"
+                                                                     + "Use right mouse button or Ctrl+left mouse button to navigate through the plot.";
     private static final String         CHART_TITLE          = "3D Scatter Plot";
     private static final String         TITLE_PREFIX         = CHART_TITLE;
     private static final String         VAR_INDEX            = "varIndex";
@@ -625,8 +628,8 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     {
         computePanel = new SingleRoiComputePanel(this, getRaster());
         dataViewer = createDataViewer();
+        dataViewer.setNoDataMessage(NO_DATA_MESSAGE);
         setNoDataCoordinatesSystem();
-        // plot.setNoDataMessage(NO_DATA_MESSAGE);
 
         setupPopupMenu();
 

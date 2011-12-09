@@ -79,6 +79,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     /** The target length of the longest side of displayed data in OpenGL units. Used to compute scale. */
     protected static final double TARGET_SIZE       = 100d;
 
+    /** The message to be shown when no or empty data sets are set. */
+    private String                noDataMessage     = null;
     /** The data set this viewer displays. */
     private DataSet               dataSet           = null;
     /** The coordinates system used for displaying the data and drawing the grid. */
@@ -198,6 +200,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 drawGrid(gl, coordinatesSystem.getGrid());
                 drawDataset(gl, coordinatesSystem.getColorProvider());
                 drawAces(gl, glu, coordinatesSystem);
+                if (dataSet == null && noDataMessage != null)
+                    drawNoDataMessage(gl);
 
                 // call the image saving task
                 processAfterDrawCallbacks(gl);
@@ -521,6 +525,53 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 }
                 gl.glEnd();
             }
+
+            /**
+             * Draw the no-data message.
+             * 
+             * @param gl The {@link javax.media.opengl.GL} instance to use.
+             */
+            private void drawNoDataMessage(GL gl)
+            {
+                gl.glMatrixMode(GL.GL_PROJECTION);
+                gl.glPushMatrix();
+                gl.glLoadIdentity();
+                gl.glMatrixMode(GL.GL_MODELVIEW);
+                gl.glPushMatrix();
+                gl.glLoadIdentity();
+
+                {
+                    final double xRatioFromPx = 2d / getWidth();
+                    final int leftMarginPx = (int) ((-0.9 + 1) / xRatioFromPx);
+                    final int lineSpacingPx = 8;
+
+                    final TextRenderer textRend = new TextRenderer(Font.decode("Arial-14"), false, true, null, true);
+
+                    // TextRenderer cannot handle line breaks, so we have to handle them manually
+                    final int lineHeight = (int) textRend.getBounds(noDataMessage.split("\n")[0]).getHeight();
+                    final int numLines = noDataMessage.split("\n").length;
+                    int lastTop = getHeight() - (getHeight() - numLines * (lineHeight + lineSpacingPx) + lineSpacingPx)
+                            / 2;
+
+                    Rectangle2D textBounds;
+                    textRend.beginRendering(getWidth(), getHeight());
+                    {
+                        gl.glColor3f(0f, 0f, 0f);
+                        for (String chunk : noDataMessage.split("\n")) {
+                            textBounds = textRend.getBounds(chunk);
+                            textRend.draw(chunk, (int) (leftMarginPx + (getWidth() - textBounds.getWidth()) / 2),
+                                    lastTop);
+                            lastTop = (int) (lastTop - textBounds.getHeight() - lineSpacingPx);
+                        }
+                    }
+                    textRend.endRendering();
+                }
+
+                gl.glMatrixMode(GL.GL_PROJECTION);
+                gl.glPopMatrix();
+                gl.glMatrixMode(GL.GL_MODELVIEW);
+                gl.glPopMatrix();
+            }
         };
 
         GLCapabilities capabilities = new GLCapabilities();
@@ -764,6 +815,18 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     {
         this.coordinatesSystem = coordinatesSystem;
         resetTransformation();
+    }
+
+    @Override
+    public void setNoDataMessage(String message)
+    {
+        this.noDataMessage = message;
+    }
+
+    @Override
+    public String getNoDataMessage()
+    {
+        return noDataMessage;
     }
 
     @Override

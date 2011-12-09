@@ -46,6 +46,20 @@ public interface GraphicalDataViewer extends DataViewer, Printable
     void setDataSetToEmpty(double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
 
     /**
+     * Set the message to be shown when the data set is <code>null</code> or empty.
+     * 
+     * @param message The message to show.
+     */
+    void setNoDataMessage(String message);
+
+    /**
+     * Return the message to be shown when the data set is <code>null</code> or empty.
+     * 
+     * @return The message to be shown when the data set is <code>null</code> or empty.
+     */
+    String getNoDataMessage();
+
+    /**
      * Reset the transformation (rotation, translation, zoom) to the default state.
      */
     void resetTransformation();
