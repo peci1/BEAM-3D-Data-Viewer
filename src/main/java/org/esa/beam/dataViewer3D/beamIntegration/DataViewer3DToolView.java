@@ -229,9 +229,12 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     protected void selectionChanged(Product product, RasterDataNode raster, VectorDataNode vectorDataNode)
     {
         if (raster != getRaster() || product != getProduct() || vectorDataNode != getVectorDataNode()) {
-            setRaster(raster);
-            setProduct(product);
-            setVectorDataNode(vectorDataNode);
+            if (raster != null)
+                setRaster(raster);
+            if (product != null)
+                setProduct(product);
+            if (vectorDataNode != null)
+                setVectorDataNode(vectorDataNode);
         }
         invokeUpdateUI();
     }
@@ -1847,8 +1850,8 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     }
                 }
                 Product product = productNode.getProduct();
-                if (raster != null)
-                    selectionChanged(product, raster, vector);
+                // if (raster != null)
+                selectionChanged(product, raster, vector);
             }
         };
     }
