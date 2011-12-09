@@ -1195,17 +1195,23 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
      */
     protected void setupPopupMenu()
     {
+        final List<JMenuItem> disabledWhenNoData = new ArrayList<JMenuItem>(6);
+
         final JMenuItem propertiesItem = new JMenuItem("Properties...", KeyEvent.VK_P); /* I18N */
         propertiesItem.addActionListener(new PropertiesAction());
+        disabledWhenNoData.add(propertiesItem);
 
         final JMenuItem saveImageMenuItem = new JMenuItem("Save as...", KeyEvent.VK_S); /* I18N */
         saveImageMenuItem.addActionListener(new SaveAction());
+        disabledWhenNoData.add(saveImageMenuItem);
 
         final JMenuItem copyItem = new JMenuItem("Copy", KeyEvent.VK_C); /* I18N */
         copyItem.addActionListener(new CopyAction());
+        disabledWhenNoData.add(copyItem);
 
         final JMenuItem printItem = new JMenuItem("Print...", KeyEvent.VK_R); /* I18N */
         printItem.addActionListener(new PrintAction());
+        disabledWhenNoData.add(printItem);
 
         final JMenuItem zoomInItem = new JMenuItem("Zoom in", KeyEvent.VK_I); /* I18N */
         zoomInItem.addActionListener(new ZoomInAction());
@@ -1215,12 +1221,14 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
 
         final JMenuItem autoRangeItem = new JMenuItem("Auto range", KeyEvent.VK_A);/* I18N */
         autoRangeItem.addActionListener(new AutoRangeAction());
+        disabledWhenNoData.add(autoRangeItem);
 
         final JMenuItem resetViewItem = new JMenuItem("Reset the view", KeyEvent.VK_R);/* I18N */
         resetViewItem.addActionListener(new ResetViewAction());
 
         final JMenuItem copyDataItem = new JMenuItem("Copy data to clipboard", KeyEvent.VK_L);/* I18N */
         copyDataItem.addActionListener(new CopyDataAction());
+        disabledWhenNoData.add(copyDataItem);
 
         popupMenu.add(propertiesItem);
         popupMenu.add(new JSeparator());
@@ -1307,7 +1315,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     popupMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
                 final boolean enabled = dataViewer.getDataSet() != null;
-                for (Component item : popupMenu.getComponents()) {
+                for (Component item : disabledWhenNoData) {
                     item.setEnabled(enabled);
                 }
             }
