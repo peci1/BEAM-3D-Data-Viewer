@@ -11,7 +11,9 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dialog.ModalityType;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -44,6 +46,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.InternalFrameAdapter;
@@ -94,8 +97,11 @@ import org.esa.beam.framework.param.ParamParseException;
 import org.esa.beam.framework.param.ParamProperties;
 import org.esa.beam.framework.param.ParamValidateException;
 import org.esa.beam.framework.param.ParamValidator;
+import org.esa.beam.framework.param.ParamValidatorRegistry;
 import org.esa.beam.framework.param.Parameter;
 import org.esa.beam.framework.param.editors.ComboBoxEditor;
+import org.esa.beam.framework.param.editors.FontEditor;
+import org.esa.beam.framework.param.validators.FontValidator;
 import org.esa.beam.framework.ui.GridBagUtils;
 import org.esa.beam.framework.ui.ModalDialog;
 import org.esa.beam.framework.ui.UIUtils;
@@ -165,6 +171,12 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     private Parameter[]                 logScaleParams       = new Parameter[4];
     /** The maximum number of displayed points. */
     private Parameter                   maxPointsParam;
+
+    // plot visual style parameters
+    private Parameter                   showTitleParam;
+    private Parameter                   titleTextParam;
+    private Parameter                   titleFontParam;
+    private Parameter                   titleColorParam;
 
     private SingleRoiComputePanel       computePanel;
 
@@ -315,6 +327,31 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         maxPointsParam.getProperties().setMinValue(0);
         maxPointsParam.getProperties().setMaxValue(Integer.MAX_VALUE);
         paramGroup.addParameter(maxPointsParam);
+
+        // CHART PROPERTIES DIALOG
+
+        showTitleParam = new Parameter("showTitle", Boolean.FALSE);
+        showTitleParam.getProperties().setLabel("Show title?");
+        showTitleParam.getProperties().setDescription("Show the main title of the plot?");
+        paramGroup.addParameter(showTitleParam);
+
+        titleTextParam = new Parameter("titleText", "");
+        titleTextParam.getProperties().setLabel("Text");
+        titleTextParam.getProperties().setDescription("The main title of the plot.");
+        paramGroup.addParameter(titleTextParam);
+
+        ParamValidatorRegistry.registerValidator(Font.class, new FontValidator());
+        titleFontParam = new Parameter("titleFont", Font.decode("Arial"));
+        titleFontParam.getProperties().setLabel("Font");
+        titleFontParam.getProperties().setDescription("The font of main title.");
+        titleFontParam.getProperties().setEditorClass(FontEditor.class);
+        titleFontParam.setDefaultValue();
+        paramGroup.addParameter(titleFontParam);
+
+        titleColorParam = new Parameter("titleColor", Color.black);
+        titleColorParam.getProperties().setLabel("Color");
+        titleColorParam.getProperties().setDescription("The color of main title.");
+        paramGroup.addParameter(titleColorParam);
 
         paramGroup.addParamChangeListener(new ParamChangeListener() {
 
@@ -1472,7 +1509,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         @Override
         public void actionPerformed(ActionEvent e)
         {
-            JOptionPane.showMessageDialog(computePanel, "Not yet implemented"); // TODO
+            new ChartPropertiesDialog(VisatApp.getApp().getMainFrame(), HELP_ID).show();
         }
     }
 
@@ -1962,6 +1999,105 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             if (newProduct != null) {
                 newProduct.addProductNodeListener(productNodeListener);
             }
+        }
+    }
+
+    /**
+     * The dialog for setting chart properties.
+     * 
+     * @author Martin Pecka
+     */
+    protected class ChartPropertiesDialog extends ModalDialog
+    {
+        private final ParamChangeListener paramListener = new ParamChangeListener() {
+
+                                                            @Override
+                                                            public void parameterValueChanged(ParamChangeEvent event)
+                                                            {
+                                                                ChartPropertiesDialog.this.getJDialog().pack();
+                                                            }
+                                                        };
+
+        @Override
+        public int show()
+        {
+            paramGroup.addParamChangeListener(paramListener);
+            return super.show();
+        }
+
+        @Override
+        public void hide()
+        {
+            super.hide();
+            paramGroup.removeParamChangeListener(paramListener);
+        }
+
+        public ChartPropertiesDialog(Window parent, String helpId)
+        {
+            super(parent, "Chart properties", ID_OK, helpId); /* I18N */
+
+            final JTabbedPane tabs = new JTabbedPane();
+            setContent(tabs);
+
+            final JPanel titlePanel = GridBagUtils.createPanel();
+            final JPanel plotPanel = new JPanel(new BorderLayout());
+            final JPanel otherPanel = new JPanel(new BorderLayout());
+            tabs.add("Title", titlePanel);/* I18N */
+            tabs.add("Plot", plotPanel);/* I18N */
+            tabs.add("other", otherPanel);/* I18N */
+
+            GridBagConstraints gbc = GridBagUtils.createConstraints("fill=BOTH,weightx=1,weighty=0,anchor=NORTH");
+
+            final JPanel general = GridBagUtils.createPanel();
+            GridBagUtils.addToPanel(titlePanel, general, gbc);
+            general.setBorder(BorderFactory.createTitledBorder("General"));/* I18N */
+
+            gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,anchor=NORTH");
+
+            GridBagUtils.addToPanel(general, showTitleParam.getEditor().getComponent(), gbc,
+                    "gridx=0,gridy=0,gridwidth=2");
+
+            GridBagUtils.addToPanel(general, titleTextParam.getEditor().getLabelComponent(), gbc,
+                    "gridx=0,gridy=1,gridwidth=1,weightx=0");
+            GridBagUtils.addToPanel(general, titleTextParam.getEditor().getComponent(), gbc,
+                    "gridx=1,gridy=1,weightx=1");
+
+            GridBagUtils.addToPanel(general, titleFontParam.getEditor().getLabelComponent(), gbc,
+                    "gridx=0,gridy=2,weightx=0");
+            GridBagUtils.addToPanel(general, titleFontParam.getEditor().getComponent(), gbc,
+                    "gridx=1,gridy=2,weightx=1");
+
+            GridBagUtils.addToPanel(general, titleColorParam.getEditor().getLabelComponent(), gbc,
+                    "gridx=0,gridy=3,weightx=0");
+            GridBagUtils.addToPanel(general, titleColorParam.getEditor().getComponent(), gbc,
+                    "gridx=1,gridy=3,weightx=1,weighty=0");
+
+            // TODO add components and parameters
+
+            // title
+            // /General
+            // //Show title?
+            // //Text
+            // //Font
+            // //Color
+            // Plot
+            // /X axis
+            // //General
+            // ///Label
+            // ///Font
+            // ///Color
+            // //Ticks
+            // ///Show tick labels?
+            // ///Tick label font
+            // ///Show tick marks?
+            // /Y axis
+            // /Z axis
+            // /W axis
+            // //Coloring
+            // ///Color palette
+            // other
+            // /General
+            // //Background color
         }
     }
 }
