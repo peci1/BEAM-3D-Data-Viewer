@@ -177,6 +177,12 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     private Parameter                   titleTextParam;
     private Parameter                   titleFontParam;
     private Parameter                   titleColorParam;
+    private Parameter[]                 axisTitleTextParams  = new Parameter[4];
+    private Parameter[]                 axisTitleFontParams  = new Parameter[4];
+    private Parameter[]                 axisTitleColorParams = new Parameter[4];
+    private Parameter[]                 axisShowLabelsParams = new Parameter[4];
+    private Parameter[]                 axisShowTicksParams  = new Parameter[4];
+    private Parameter[]                 axisLabelFontParams  = new Parameter[4];
 
     private SingleRoiComputePanel       computePanel;
 
@@ -345,13 +351,46 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         titleFontParam.getProperties().setLabel("Font");
         titleFontParam.getProperties().setDescription("The font of main title.");
         titleFontParam.getProperties().setEditorClass(FontEditor.class);
-        titleFontParam.setDefaultValue();
         paramGroup.addParameter(titleFontParam);
 
         titleColorParam = new Parameter("titleColor", Color.black);
         titleColorParam.getProperties().setLabel("Color");
         titleColorParam.getProperties().setDescription("The color of main title.");
         paramGroup.addParameter(titleColorParam);
+
+        for (int i = 0; i < 4; i++) {
+            axisTitleTextParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleText", "");
+            axisTitleTextParams[i].getProperties().setLabel("Label text");
+            axisTitleTextParams[i].getProperties().setDescription("The label of the axis.");
+            paramGroup.addParameter(axisTitleTextParams[i]);
+
+            axisTitleFontParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleFont", Font.decode("Arial"));
+            axisTitleFontParams[i].getProperties().setLabel("Label font");
+            axisTitleFontParams[i].getProperties().setDescription("The font of the label.");
+            axisTitleFontParams[i].getProperties().setEditorClass(FontEditor.class);
+            paramGroup.addParameter(axisTitleFontParams[i]);
+
+            axisTitleColorParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleColor", Color.black);
+            axisTitleColorParams[i].getProperties().setLabel("Label color");
+            axisTitleColorParams[i].getProperties().setDescription("The color of the label.");
+            paramGroup.addParameter(axisTitleColorParams[i]);
+
+            axisShowLabelsParams[i] = new Parameter(VAR_NAMES[i] + "axisShowLabels", Boolean.TRUE);
+            axisShowLabelsParams[i].getProperties().setLabel("Show tick labels");
+            axisShowLabelsParams[i].getProperties().setDescription("Show the labels for ticks?");
+            paramGroup.addParameter(axisShowLabelsParams[i]);
+
+            axisShowTicksParams[i] = new Parameter(VAR_NAMES[i] + "axisShowTicks", Boolean.TRUE);
+            axisShowTicksParams[i].getProperties().setLabel("Show tick marks");
+            axisShowTicksParams[i].getProperties().setDescription("Show the marks for ticks?");
+            paramGroup.addParameter(axisShowTicksParams[i]);
+
+            axisLabelFontParams[i] = new Parameter(VAR_NAMES[i] + "axisLabelFont", Font.decode("Arial 10"));
+            axisLabelFontParams[i].getProperties().setLabel("Tick label font");
+            axisLabelFontParams[i].getProperties().setDescription("The font of tick labels.");
+            axisLabelFontParams[i].getProperties().setEditorClass(FontEditor.class);
+            paramGroup.addParameter(axisLabelFontParams[i]);
+        }
 
         paramGroup.addParamChangeListener(new ParamChangeListener() {
 
@@ -2040,19 +2079,20 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             setContent(tabs);
 
             final JPanel titlePanel = GridBagUtils.createPanel();
-            final JPanel plotPanel = new JPanel(new BorderLayout());
+            final JTabbedPane plotPanel = new JTabbedPane();
             final JPanel otherPanel = new JPanel(new BorderLayout());
             tabs.add("Title", titlePanel);/* I18N */
             tabs.add("Plot", plotPanel);/* I18N */
             tabs.add("other", otherPanel);/* I18N */
 
-            GridBagConstraints gbc = GridBagUtils.createConstraints("fill=BOTH,weightx=1,weighty=0,anchor=NORTH");
+            GridBagConstraints gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,weighty=0,anchor=NORTH");
 
+            // TITLE->GENERAL
             final JPanel general = GridBagUtils.createPanel();
-            GridBagUtils.addToPanel(titlePanel, general, gbc);
+            GridBagUtils.addToPanel(titlePanel, general, gbc, "gridx=0,gridy=0,weighty=1");
             general.setBorder(BorderFactory.createTitledBorder("General"));/* I18N */
 
-            gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,anchor=NORTH");
+            gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,weighty=0,anchor=NORTHWEST,gridheight=1");
 
             GridBagUtils.addToPanel(general, showTitleParam.getEditor().getComponent(), gbc,
                     "gridx=0,gridy=0,gridwidth=2");
@@ -2072,6 +2112,54 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             GridBagUtils.addToPanel(general, titleColorParam.getEditor().getComponent(), gbc,
                     "gridx=1,gridy=3,weightx=1,weighty=0");
 
+            // PLOT->AXIS
+            for (int i = 0; i < 4; i++) {
+                final JPanel axisPanel = GridBagUtils.createPanel();
+                plotPanel.addTab(VAR_NAMES[i] + " axis", axisPanel); /* I18N */
+
+                final JPanel axisGeneralPanel = GridBagUtils.createPanel();
+                final JPanel axisTicksPanel = GridBagUtils.createPanel();
+                final JPanel axisOuter = GridBagUtils.createPanel();
+                GridBagUtils.addToPanel(axisPanel, axisOuter, gbc,
+                        "gridx=0,gridy=0,fill=HORIZONTAL,anchor=NORTHWEST,weighty=1");
+                GridBagUtils.addToPanel(axisOuter, axisGeneralPanel, gbc,
+                        "gridx=0,gridy=0,fill=BOTH,weightx=1,weighty=0,anchor=NORTHWEST,gridwidth=1");
+                GridBagUtils.addToPanel(axisOuter, axisTicksPanel, gbc, "gridx=0,gridy=1");
+
+                // PLOT->AXIS->GENERAL
+
+                axisGeneralPanel.setBorder(BorderFactory.createTitledBorder("General")); /* I18N */
+
+                GridBagUtils.addToPanel(axisGeneralPanel, axisTitleTextParams[i].getEditor().getLabelComponent(), gbc,
+                        "gridx=0,gridy=0,gridwidth=1,weightx=0,weighty=0,fill=HORIZONTAL");
+                GridBagUtils.addToPanel(axisGeneralPanel, axisTitleTextParams[i].getEditor().getComponent(), gbc,
+                        "gridx=1,gridy=0,weightx=1");
+
+                GridBagUtils.addToPanel(axisGeneralPanel, axisTitleFontParams[i].getEditor().getLabelComponent(), gbc,
+                        "gridx=0,gridy=1,weightx=0");
+                GridBagUtils.addToPanel(axisGeneralPanel, axisTitleFontParams[i].getEditor().getComponent(), gbc,
+                        "gridx=1,gridy=1,weightx=1");
+
+                GridBagUtils.addToPanel(axisGeneralPanel, axisTitleColorParams[i].getEditor().getLabelComponent(), gbc,
+                        "gridx=0,gridy=2,weightx=0");
+                GridBagUtils.addToPanel(axisGeneralPanel, axisTitleColorParams[i].getEditor().getComponent(), gbc,
+                        "gridx=1,gridy=2,weightx=1");
+
+                // PLOT->AXIS->TICKS
+
+                axisTicksPanel.setBorder(BorderFactory.createTitledBorder("Ticks")); /* I18N */
+
+                GridBagUtils.addToPanel(axisTicksPanel, axisShowLabelsParams[i].getEditor().getComponent(), gbc,
+                        "gridx=0,gridy=0,gridwidth=2,weightx=1,weighty=0,fill=HORIZONTAL");
+
+                GridBagUtils.addToPanel(axisTicksPanel, axisLabelFontParams[i].getEditor().getLabelComponent(), gbc,
+                        "gridx=0,gridy=1,weightx=0,gridwidth=1");
+                GridBagUtils.addToPanel(axisTicksPanel, axisLabelFontParams[i].getEditor().getComponent(), gbc,
+                        "gridx=1,gridy=1,weightx=1");
+
+                GridBagUtils.addToPanel(axisTicksPanel, axisShowTicksParams[i].getEditor().getComponent(), gbc,
+                        "gridx=0,gridy=2,weightx=1,gridwidth=2");
+            }
             // TODO add components and parameters
 
             // title
