@@ -19,6 +19,13 @@ public interface Axis<N extends Number>
     String getLabel();
 
     /**
+     * Set the label of the axis.
+     * 
+     * @param label The label text.
+     */
+    void setLabel(String label);
+
+    /**
      * Return the minimum value this axis displays.
      * 
      * @return The minimum value this axis displays.

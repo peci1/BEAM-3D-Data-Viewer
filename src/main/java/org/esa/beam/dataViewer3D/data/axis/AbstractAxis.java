@@ -100,6 +100,7 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     /**
      * @param label The label of this axis.
      */
+    @Override
     public void setLabel(String label)
     {
         this.label = label;
