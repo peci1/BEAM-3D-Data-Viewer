@@ -183,6 +183,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     private Parameter[]                 axisShowLabelsParams = new Parameter[4];
     private Parameter[]                 axisShowTicksParams  = new Parameter[4];
     private Parameter[]                 axisLabelFontParams  = new Parameter[4];
+    private Parameter                   backgroundColorParam;
 
     private SingleRoiComputePanel       computePanel;
 
@@ -349,19 +350,20 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         ParamValidatorRegistry.registerValidator(Font.class, new FontValidator());
         titleFontParam = new Parameter("titleFont", Font.decode("Arial"));
         titleFontParam.getProperties().setLabel("Font");
-        titleFontParam.getProperties().setDescription("The font of main title.");
+        titleFontParam.getProperties().setDescription("The font of the main title.");
         titleFontParam.getProperties().setEditorClass(FontEditor.class);
         paramGroup.addParameter(titleFontParam);
 
         titleColorParam = new Parameter("titleColor", Color.black);
         titleColorParam.getProperties().setLabel("Color");
-        titleColorParam.getProperties().setDescription("The color of main title.");
+        titleColorParam.getProperties().setDescription("The color of the main title.");
         paramGroup.addParameter(titleColorParam);
 
         for (int i = 0; i < 4; i++) {
             axisTitleTextParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleText", "");
             axisTitleTextParams[i].getProperties().setLabel("Label text");
-            axisTitleTextParams[i].getProperties().setDescription("The label of the axis.");
+            axisTitleTextParams[i].getProperties().setDescription(
+                    "The label of the axis. Leave empty to use the default label.");
             paramGroup.addParameter(axisTitleTextParams[i]);
 
             axisTitleFontParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleFont", Font.decode("Arial"));
@@ -391,6 +393,11 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             axisLabelFontParams[i].getProperties().setEditorClass(FontEditor.class);
             paramGroup.addParameter(axisLabelFontParams[i]);
         }
+
+        backgroundColorParam = new Parameter("backgroundColor", Color.white);
+        backgroundColorParam.getProperties().setLabel("Background color");
+        backgroundColorParam.getProperties().setDescription("The color of the background of the plot.");
+        paramGroup.addParameter(backgroundColorParam);
 
         paramGroup.addParamChangeListener(new ParamChangeListener() {
 
@@ -1193,10 +1200,11 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     protected void updateChartButtonsState()
     {
         zoomAllButton.setEnabled(true);
+        propertiesButton.setEnabled(true);
+
         final boolean enable = dataViewer.getDataSet() != null;
         printButton.setEnabled(enable);
         saveButton.setEnabled(enable);
-        propertiesButton.setEnabled(enable);
     }
 
     /**
@@ -1294,11 +1302,10 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
      */
     protected void setupPopupMenu()
     {
-        final List<JMenuItem> disabledWhenNoData = new ArrayList<JMenuItem>(6);
+        final List<JMenuItem> disabledWhenNoData = new ArrayList<JMenuItem>(5);
 
         final JMenuItem propertiesItem = new JMenuItem("Properties...", KeyEvent.VK_P); /* I18N */
         propertiesItem.addActionListener(new PropertiesAction());
-        disabledWhenNoData.add(propertiesItem);
 
         final JMenuItem saveImageMenuItem = new JMenuItem("Save as...", KeyEvent.VK_S); /* I18N */
         saveImageMenuItem.addActionListener(new SaveAction());
@@ -2073,17 +2080,23 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
 
         public ChartPropertiesDialog(Window parent, String helpId)
         {
-            super(parent, "Chart properties", ID_OK, helpId); /* I18N */
+            super(parent, "Chart properties", ID_OK | ID_RESET, helpId); /* I18N */
+
+            // BEAM puts the buttons in order OK | RESET, which is counter-intuitive, so reorder them
+            JComponent resetButton = getButton(ID_RESET);
+            Container resetParent = resetButton.getParent();
+            resetParent.remove(resetButton);
+            resetParent.add(resetButton, 0);
 
             final JTabbedPane tabs = new JTabbedPane();
             setContent(tabs);
 
             final JPanel titlePanel = GridBagUtils.createPanel();
             final JTabbedPane plotPanel = new JTabbedPane();
-            final JPanel otherPanel = new JPanel(new BorderLayout());
+            final JPanel otherPanel = GridBagUtils.createPanel();
             tabs.add("Title", titlePanel);/* I18N */
             tabs.add("Plot", plotPanel);/* I18N */
-            tabs.add("other", otherPanel);/* I18N */
+            tabs.add("Other", otherPanel);/* I18N */
 
             GridBagConstraints gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,weighty=0,anchor=NORTH");
 
@@ -2160,32 +2173,23 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                 GridBagUtils.addToPanel(axisTicksPanel, axisShowTicksParams[i].getEditor().getComponent(), gbc,
                         "gridx=0,gridy=2,weightx=1,gridwidth=2");
             }
-            // TODO add components and parameters
 
-            // title
-            // /General
-            // //Show title?
-            // //Text
-            // //Font
-            // //Color
-            // Plot
-            // /X axis
-            // //General
-            // ///Label
-            // ///Font
-            // ///Color
-            // //Ticks
-            // ///Show tick labels?
-            // ///Tick label font
-            // ///Show tick marks?
-            // /Y axis
-            // /Z axis
-            // /W axis
-            // //Coloring
-            // ///Color palette
-            // other
-            // /General
-            // //Background color
+            final JPanel otherGeneral = GridBagUtils.createPanel();
+            GridBagUtils.addToPanel(otherPanel, otherGeneral, gbc, "gridx=0,gridy=0,weighty=1");
+            otherGeneral.setBorder(BorderFactory.createTitledBorder("General"));/* I18N */
+
+            gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,weighty=0,anchor=NORTHWEST,gridheight=1");
+
+            GridBagUtils.addToPanel(otherGeneral, backgroundColorParam.getEditor().getComponent(), gbc,
+                    "gridx=1,gridy=0");
+            GridBagUtils.addToPanel(otherGeneral, backgroundColorParam.getEditor().getLabelComponent(), gbc,
+                    "gridx=0,gridy=0,weightx=0");
+        }
+
+        @Override
+        protected void onReset()
+        {
+            // TODO add reset behavior
         }
     }
 }
