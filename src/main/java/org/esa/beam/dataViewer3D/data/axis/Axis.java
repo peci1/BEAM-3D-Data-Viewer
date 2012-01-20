@@ -26,6 +26,13 @@ public interface Axis<N extends Number>
     void setLabel(String label);
 
     /**
+     * Set the label of the axis to be displayed when no custom label is set.
+     * 
+     * @param label The label text.
+     */
+    void setDefaultLabel(String label);
+
+    /**
      * Return the minimum value this axis displays.
      * 
      * @return The minimum value this axis displays.

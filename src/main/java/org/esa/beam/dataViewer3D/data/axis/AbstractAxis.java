@@ -19,7 +19,7 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
 {
 
     /** The label of this axis. */
-    protected String                 label;
+    protected String                 label, defaultLabel;
 
     /** Minimum and maximum values displayed on the axis. */
     protected N                      min, max;
@@ -51,7 +51,7 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     protected boolean                logScale = false;
 
     /**
-     * @param label The label of this axis.
+     * @param label The label of this axis (also used as the default axis).
      * @param min Minimum value displayed on the axis.
      * @param max Maximum value displayed on the axis.
      * @param tickGenerator The object that generates all the ticks of this axis.
@@ -61,6 +61,7 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     public AbstractAxis(String label, N min, N max, TickGenerator<N> tickGenerator, double scale, boolean logScale)
     {
         this.label = label;
+        setDefaultLabel(label);
         this.min = min;
         this.max = max;
         if (min == max) {
@@ -82,28 +83,34 @@ public abstract class AbstractAxis<N extends Number> implements Axis<N>
     @Override
     public String getLabel()
     {
-        final StringBuilder builder = new StringBuilder(label);
-        if (scale != 1 || logScale) {
-            builder.append(" (");
-            if (scale != 1) {
-                builder.append("scaled ").append(scale).append("-times");
-                if (logScale)
-                    builder.append(", ");
-            }
-            if (logScale)
-                builder.append("log-scaled");
-            builder.append(")");
-        }
-        return builder.toString();
+        if (label != null)
+            return label;
+        return defaultLabel;
     }
 
-    /**
-     * @param label The label of this axis.
-     */
     @Override
     public void setLabel(String label)
     {
         this.label = label;
+    }
+
+    @Override
+    public void setDefaultLabel(String label)
+    {
+        final StringBuilder builder = new StringBuilder(label);
+        if (scale != 1 || logScale) {
+            builder.append(" (");
+            if (scale != 1) {
+                builder.append("scaled ").append(scale).append("-times"); /* I18N */
+                if (logScale)
+                    builder.append(", ");
+            }
+            if (logScale)
+                builder.append("log-scaled"); /* I18N */
+            builder.append(")");
+        }
+
+        this.defaultLabel = builder.toString();
     }
 
     /**
