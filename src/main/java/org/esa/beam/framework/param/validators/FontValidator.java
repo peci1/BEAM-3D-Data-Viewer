@@ -8,6 +8,8 @@ import java.awt.GraphicsEnvironment;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.esa.beam.framework.param.AbstractParamValidator;
 import org.esa.beam.framework.param.ParamFormatException;
@@ -24,9 +26,10 @@ public class FontValidator extends AbstractParamValidator
 {
 
     /** The accessible system font families. */
-    private final static String[] families = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                                                   .getAvailableFontFamilyNames();
-    private final static Collator collator = Collator.getInstance(Locale.getDefault());
+    private final static String[] families     = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                                                       .getAvailableFontFamilyNames();
+    private final static Collator collator     = Collator.getInstance(Locale.getDefault());
+    private final static Pattern  parsePattern = Pattern.compile("^(.*),( bold,?)?( italic,)? ([0-9]+)pt$");
 
     static {
         // sort the font families to enable binary search
@@ -37,10 +40,31 @@ public class FontValidator extends AbstractParamValidator
     @Override
     public Object parse(Parameter parameter, String text) throws ParamParseException
     {
-        final Font result = Font.decode(text);
-        if (result == null)
-            throw new ParamParseException(parameter, "Invalid font specification.");/* I18N */
-        return result;
+        if (!text.contains(",")) {
+            final Font result = Font.decode(text);
+            if (result == null)
+                throw new ParamParseException(parameter, "Invalid font specification.");/* I18N */
+            return result;
+        } else {
+            final Matcher matcher = parsePattern.matcher(text);
+            if (matcher.matches()) {
+                String style;
+                if (matcher.group(2) != null && matcher.group(2).length() > 0) {
+                    if (matcher.group(3) != null && matcher.group(3).length() > 0) {
+                        style = "-BOLDITALIC";
+                    } else {
+                        style = "-BOLD";
+                    }
+                } else if (matcher.group(3) != null && matcher.group(3).length() > 0) {
+                    style = "-ITALIC";
+                } else {
+                    style = "";
+                }
+                return Font.decode(matcher.group(1) + style + "-" + matcher.group(4));
+            } else {
+                return Font.decode(null);
+            }
+        }
     }
 
     @Override
