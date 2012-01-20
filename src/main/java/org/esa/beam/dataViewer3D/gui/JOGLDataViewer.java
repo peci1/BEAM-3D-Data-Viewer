@@ -79,6 +79,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     /** The target length of the longest side of displayed data in OpenGL units. Used to compute scale. */
     protected static final double TARGET_SIZE       = 100d;
 
+    /** The title of the chart. */
+    private String                title             = null;
     /** The message to be shown when no or empty data sets are set. */
     private String                noDataMessage     = null;
     /** The data set this viewer displays. */
@@ -815,6 +817,18 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     {
         this.coordinatesSystem = coordinatesSystem;
         resetTransformation();
+    }
+
+    @Override
+    public String getTitle()
+    {
+        return this.title;
+    }
+
+    @Override
+    public void setTitle(String title)
+    {
+        this.title = title;
     }
 
     @Override

@@ -45,4 +45,16 @@ public interface DataViewer
      * Update the view.
      */
     void update();
+
+    /**
+     * @return The title of the viewer.
+     */
+    String getTitle();
+
+    /**
+     * Set the title of the viewer.
+     * 
+     * @param title The title.
+     */
+    void setTitle(String title);
 }
