@@ -114,6 +114,7 @@ import org.esa.beam.framework.ui.product.VectorDataLayer;
 import org.esa.beam.framework.ui.product.VectorDataLayerFilterFactory;
 import org.esa.beam.framework.ui.tool.ToolButtonFactory;
 import org.esa.beam.util.Debug;
+import org.esa.beam.util.PropertyMap;
 import org.esa.beam.util.SystemUtils;
 import org.esa.beam.util.UniversalDocumentListener;
 import org.esa.beam.util.io.BeamFileChooser;
@@ -162,6 +163,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             "scatter_w"                                     };
 
     private ParamGroup                  paramGroup;
+    private ParamGroup                  chartPropertiesGroup;
 
     private Parameter[]                 rasterNameParams     = new Parameter[4];
     private Parameter[]                 autoMinMaxParams     = new Parameter[4];
@@ -337,15 +339,36 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
 
         // CHART PROPERTIES DIALOG
 
+        chartPropertiesGroup = new ParamGroup();
+
         showTitleParam = new Parameter("showTitle", Boolean.FALSE);
         showTitleParam.getProperties().setLabel("Show title?");
         showTitleParam.getProperties().setDescription("Show the main title of the plot?");
         paramGroup.addParameter(showTitleParam);
+        chartPropertiesGroup.addParameter(showTitleParam);
+        showTitleParam.addParamChangeListener(new ParamChangeListener() {
+            @Override
+            public void parameterValueChanged(ParamChangeEvent event)
+            {
+                dataViewer.getRenderParams().showTitle = (Boolean) event.getParameter().getValue();
+            }
+        });
 
         titleTextParam = new Parameter("titleText", "");
         titleTextParam.getProperties().setLabel("Text");
         titleTextParam.getProperties().setDescription("The main title of the plot.");
         paramGroup.addParameter(titleTextParam);
+        chartPropertiesGroup.addParameter(titleTextParam);
+        titleTextParam.addParamChangeListener(new ParamChangeListener() {
+            @Override
+            public void parameterValueChanged(ParamChangeEvent event)
+            {
+                String value = (String) event.getParameter().getValue();
+                if (value != null && value.length() == 0)
+                    value = null;
+                dataViewer.setTitle(value);
+            }
+        });
 
         ParamValidatorRegistry.registerValidator(Font.class, new FontValidator());
         titleFontParam = new Parameter("titleFont", Font.decode("Arial"));
@@ -353,51 +376,131 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         titleFontParam.getProperties().setDescription("The font of the main title.");
         titleFontParam.getProperties().setEditorClass(FontEditor.class);
         paramGroup.addParameter(titleFontParam);
+        chartPropertiesGroup.addParameter(titleFontParam);
+        titleFontParam.addParamChangeListener(new ParamChangeListener() {
+            @Override
+            public void parameterValueChanged(ParamChangeEvent event)
+            {
+                dataViewer.getRenderParams().titleFont = (Font) event.getParameter().getValue();
+            }
+        });
 
         titleColorParam = new Parameter("titleColor", Color.black);
         titleColorParam.getProperties().setLabel("Color");
         titleColorParam.getProperties().setDescription("The color of the main title.");
         paramGroup.addParameter(titleColorParam);
+        chartPropertiesGroup.addParameter(titleColorParam);
+        titleColorParam.addParamChangeListener(new ParamChangeListener() {
+            @Override
+            public void parameterValueChanged(ParamChangeEvent event)
+            {
+                dataViewer.getRenderParams().titleColor = (Color) event.getParameter().getValue();
+            }
+        });
 
         for (int i = 0; i < 4; i++) {
+            final int index = i;
             axisTitleTextParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleText", "");
             axisTitleTextParams[i].getProperties().setLabel("Label text");
             axisTitleTextParams[i].getProperties().setDescription(
                     "The label of the axis. Leave empty to use the default label.");
             paramGroup.addParameter(axisTitleTextParams[i]);
+            chartPropertiesGroup.addParameter(axisTitleTextParams[i]);
+            // TODO add bindings to change the data viewer values appropriately
+            axisTitleTextParams[i].addParamChangeListener(new ParamChangeListener() {
+                @Override
+                public void parameterValueChanged(ParamChangeEvent event)
+                {
+                    if (index < dataViewer.getCoordinatesSystem().getAces().length) {
+                        final String value = (String) event.getParameter().getValue();
+                        if (value != null && value.length() > 0)
+                            dataViewer.getCoordinatesSystem().getAces()[index].setLabel(value);
+                        else
+                            dataViewer.getCoordinatesSystem().getAces()[index].setLabel(null);
+                    }
+                }
+            });
 
             axisTitleFontParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleFont", Font.decode("Arial"));
             axisTitleFontParams[i].getProperties().setLabel("Label font");
             axisTitleFontParams[i].getProperties().setDescription("The font of the label.");
             axisTitleFontParams[i].getProperties().setEditorClass(FontEditor.class);
             paramGroup.addParameter(axisTitleFontParams[i]);
+            chartPropertiesGroup.addParameter(axisTitleFontParams[i]);
+            axisTitleFontParams[i].addParamChangeListener(new ParamChangeListener() {
+                @Override
+                public void parameterValueChanged(ParamChangeEvent event)
+                {
+                    dataViewer.getRenderParams().axisTitleFont[index] = (Font) event.getParameter().getValue();
+                }
+            });
 
             axisTitleColorParams[i] = new Parameter(VAR_NAMES[i] + "axisTitleColor", Color.black);
             axisTitleColorParams[i].getProperties().setLabel("Label color");
             axisTitleColorParams[i].getProperties().setDescription("The color of the label.");
             paramGroup.addParameter(axisTitleColorParams[i]);
+            chartPropertiesGroup.addParameter(axisTitleColorParams[i]);
+            axisTitleColorParams[i].addParamChangeListener(new ParamChangeListener() {
+                @Override
+                public void parameterValueChanged(ParamChangeEvent event)
+                {
+                    dataViewer.getRenderParams().axisTitleColor[index] = (Color) event.getParameter().getValue();
+                }
+            });
 
             axisShowLabelsParams[i] = new Parameter(VAR_NAMES[i] + "axisShowLabels", Boolean.TRUE);
             axisShowLabelsParams[i].getProperties().setLabel("Show tick labels");
             axisShowLabelsParams[i].getProperties().setDescription("Show the labels for ticks?");
             paramGroup.addParameter(axisShowLabelsParams[i]);
+            chartPropertiesGroup.addParameter(axisShowLabelsParams[i]);
+            axisShowLabelsParams[i].addParamChangeListener(new ParamChangeListener() {
+                @Override
+                public void parameterValueChanged(ParamChangeEvent event)
+                {
+                    dataViewer.getRenderParams().axisShowLabels[index] = (Boolean) event.getParameter().getValue();
+                }
+            });
 
             axisShowTicksParams[i] = new Parameter(VAR_NAMES[i] + "axisShowTicks", Boolean.TRUE);
             axisShowTicksParams[i].getProperties().setLabel("Show tick marks");
             axisShowTicksParams[i].getProperties().setDescription("Show the marks for ticks?");
             paramGroup.addParameter(axisShowTicksParams[i]);
+            chartPropertiesGroup.addParameter(axisShowTicksParams[i]);
+            axisShowTicksParams[i].addParamChangeListener(new ParamChangeListener() {
+                @Override
+                public void parameterValueChanged(ParamChangeEvent event)
+                {
+                    dataViewer.getRenderParams().axisShowTicks[index] = (Boolean) event.getParameter().getValue();
+                }
+            });
 
             axisLabelFontParams[i] = new Parameter(VAR_NAMES[i] + "axisLabelFont", Font.decode("Arial 10"));
             axisLabelFontParams[i].getProperties().setLabel("Tick label font");
             axisLabelFontParams[i].getProperties().setDescription("The font of tick labels.");
             axisLabelFontParams[i].getProperties().setEditorClass(FontEditor.class);
             paramGroup.addParameter(axisLabelFontParams[i]);
+            chartPropertiesGroup.addParameter(axisLabelFontParams[i]);
+            axisLabelFontParams[i].addParamChangeListener(new ParamChangeListener() {
+                @Override
+                public void parameterValueChanged(ParamChangeEvent event)
+                {
+                    dataViewer.getRenderParams().axisLabelFont[index] = (Font) event.getParameter().getValue();
+                }
+            });
         }
 
         backgroundColorParam = new Parameter("backgroundColor", Color.white);
         backgroundColorParam.getProperties().setLabel("Background color");
         backgroundColorParam.getProperties().setDescription("The color of the background of the plot.");
         paramGroup.addParameter(backgroundColorParam);
+        chartPropertiesGroup.addParameter(backgroundColorParam);
+        backgroundColorParam.addParamChangeListener(new ParamChangeListener() {
+            @Override
+            public void parameterValueChanged(ParamChangeEvent event)
+            {
+                dataViewer.getRenderParams().backgroundColor = (Color) event.getParameter().getValue();
+            }
+        });
 
         paramGroup.addParamChangeListener(new ParamChangeListener() {
 
@@ -2055,19 +2158,29 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
      */
     protected class ChartPropertiesDialog extends ModalDialog
     {
-        private final ParamChangeListener paramListener = new ParamChangeListener() {
+        private final ParamChangeListener paramListener       = new ParamChangeListener() {
 
-                                                            @Override
-                                                            public void parameterValueChanged(ParamChangeEvent event)
-                                                            {
-                                                                ChartPropertiesDialog.this.getJDialog().pack();
-                                                            }
-                                                        };
+                                                                  @Override
+                                                                  public void parameterValueChanged(
+                                                                          ParamChangeEvent event)
+                                                                  {
+                                                                      ChartPropertiesDialog.this.getJDialog().pack();
+                                                                  }
+                                                              };
+
+        private final PropertyMap         propertiesUnchanged = new PropertyMap();
 
         @Override
         public int show()
         {
-            paramGroup.addParamChangeListener(paramListener);
+            chartPropertiesGroup.getParameterValues(propertiesUnchanged);
+            chartPropertiesGroup.addParamChangeListener(paramListener);
+
+            // sometimes the editors remain in an old state, so make sure to update them all
+            for (int i = 0; i < chartPropertiesGroup.getNumParameters(); i++) {
+                chartPropertiesGroup.getParameterAt(i).getEditor().reconfigureUI();
+            }
+
             return super.show();
         }
 
@@ -2075,18 +2188,25 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         public void hide()
         {
             super.hide();
-            paramGroup.removeParamChangeListener(paramListener);
+            chartPropertiesGroup.removeParamChangeListener(paramListener);
         }
 
         public ChartPropertiesDialog(Window parent, String helpId)
         {
-            super(parent, "Chart properties", ID_OK | ID_RESET, helpId); /* I18N */
+            super(parent, "Chart properties", ID_OK | ID_RESET | ID_CANCEL, helpId); /* I18N */
 
-            // BEAM puts the buttons in order OK | RESET, which is counter-intuitive, so reorder them
-            JComponent resetButton = getButton(ID_RESET);
-            Container resetParent = resetButton.getParent();
-            resetParent.remove(resetButton);
-            resetParent.add(resetButton, 0);
+            {
+                // BEAM puts the buttons in order OK | CANCEL | RESET, which is counter-intuitive, so reorder them
+                JComponent button = getButton(ID_CANCEL);
+                Container buttonParent = button.getParent();
+                buttonParent.remove(button);
+                buttonParent.add(button, 0);
+
+                button = getButton(ID_RESET);
+                buttonParent = button.getParent();
+                buttonParent.remove(button);
+                buttonParent.add(button, 0);
+            }
 
             final JTabbedPane tabs = new JTabbedPane();
             setContent(tabs);
@@ -2189,7 +2309,26 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         @Override
         protected void onReset()
         {
-            // TODO add reset behavior
+            for (int i = 0; i < chartPropertiesGroup.getNumParameters(); i++) {
+                final Parameter param = chartPropertiesGroup.getParameterAt(i);
+                param.setDefaultValue();
+            }
+            super.onReset();
+        }
+
+        @Override
+        protected void onOK()
+        {
+            super.onOK();
+            updateUI();
+        }
+
+        @Override
+        protected void onCancel()
+        {
+            chartPropertiesGroup.setParameterValues(propertiesUnchanged, null);
+            super.onCancel();
+            updateUI();
         }
     }
 }
