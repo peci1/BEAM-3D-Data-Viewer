@@ -31,6 +31,7 @@ import java.awt.print.PageFormat;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
@@ -78,6 +79,9 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
 
     /** The target length of the longest side of displayed data in OpenGL units. Used to compute scale. */
     protected static final double TARGET_SIZE       = 100d;
+
+    /** The rendering parameters. Other classes can change its properties anytime without notifying. */
+    private RenderParams          renderParams      = createRenderParams();
 
     /** The title of the chart. */
     private String                title             = null;
@@ -132,6 +136,22 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
     public JOGLDataViewer()
     {
         glEventListener = new GLEventListener() {
+            private final HashMap<Font, TextRenderer> textRenderers = new HashMap<Font, TextRenderer>();
+
+            private TextRenderer getTextRenderer(Font font)
+            {
+                if (!textRenderers.containsKey(font)) {
+                    final TextRenderer rend = new TextRenderer(font, false, true, null, true);
+                    textRenderers.put(font, rend);
+                }
+                return textRenderers.get(font);
+            }
+
+            private TextRenderer getBoldTextRenderer(Font font)
+            {
+                return getTextRenderer(font.deriveFont(Font.BOLD));
+            }
+
             @Override
             public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
             {
@@ -143,9 +163,6 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             public void init(GLAutoDrawable drawable)
             {
                 GL gl = drawable.getGL();
-
-                // set erase color
-                gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // white
 
                 // set drawing color and point size
                 gl.glColor3f(0.0f, 0.0f, 0.0f);
@@ -172,6 +189,10 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
             {
                 GL gl = drawable.getGL();
                 GLU glu = new GLU();
+
+                // set erase color
+                final Color color = renderParams.backgroundColor;
+                gl.glClearColor(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, 1f);
 
                 gl.glClear(GL.GL_COLOR_BUFFER_BIT);
 
@@ -204,6 +225,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 drawAces(gl, glu, coordinatesSystem);
                 if (dataSet == null && noDataMessage != null)
                     drawNoDataMessage(gl);
+                else if (title != null && renderParams.showTitle)
+                    drawTitle(gl);
 
                 // call the image saving task
                 processAfterDrawCallbacks(gl);
@@ -222,8 +245,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 // gl.glBegin(GL.GL_LINES);
                 {
                     Axis<?>[] aces = coordinatesSystem.getAces();
-                    TextRenderer textRend = new TextRenderer(Font.decode("Arial-12"), false, true, null, true);
-                    TextRenderer boldTextRend = new TextRenderer(Font.decode("Arial-bold-12"), false, true, null, true);
+                    TextRenderer textRend = getTextRenderer(renderParams.axisLabelFont[0]);
+                    TextRenderer boldTextRend = getBoldTextRenderer(renderParams.axisLabelFont[0]);
                     final double sqrtZoom = Math.sqrt(Math.min(1, zoom));
                     int[] viewport = new int[4];
                     double[] point = new double[3], axisStart = new double[3], axisEnd = new double[3];
@@ -236,9 +259,9 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                     vertices[2] = aces[2].getMin().doubleValue();
 
                     boldTextRend.beginRendering(getWidth(), getHeight());
-                    {
+                    {// draw the origin label
                         gl.glMatrixMode(GL.GL_MODELVIEW);
-                        gl.glColor3f(0f, 0f, 0f);
+                        gl.glColor3f(0f, 0f, 0f); // origin will always be painted black
                         glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
                                 viewport, 0, point, 0);
                         String originText = "[" + aces[0].getTickLabels()[0] + "; " + aces[1].getTickLabels()[0] + "; "
@@ -253,114 +276,133 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                     boldTextRend.endRendering();
 
                     for (int i = 0; i < 3; i++) {
-                        vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
-                        vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
-                        vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
-
-                        glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
-                                viewport, 0, axisStart, 0);
-
-                        gl.glLineWidth(1.5f);
-
-                        gl.glBegin(GL.GL_LINES);
-                        {
-                            gl.glColor3f(0.2f, 0.2f, 0.2f);
-                            gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                            vertices[i] = aces[i].applyScaling(aces[i].getMax().doubleValue());
-                            gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                        }
-                        gl.glEnd();
-
-                        glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
-                                viewport, 0, axisEnd, 0);
-
-                        gl.glLineWidth(0.5f);
-
-                        Number[] ticks = aces[i].getTicks();
-                        String[] tickLabels = aces[i].getTickLabels();
-
-                        Rectangle2D lastDrawnTickLabelArea = null;
-
-                        // the cycle goes downward to make sure the last label is drawn always
-                        for (int l = ticks.length - 1; l > 0; l--) {
+                        {// draw the axis
                             vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
                             vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
                             vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
-                            vertices[i] = aces[i].applyScaling(ticks[l].doubleValue());
+
+                            glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
+                                    viewport, 0, axisStart, 0);
+
+                            gl.glLineWidth(1.5f);
+
                             gl.glBegin(GL.GL_LINES);
                             {
-                                gl.glColor3f(0.4f, 0.4f, 0.4f);
+                                gl.glColor3f(0.2f, 0.2f, 0.2f);
                                 gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                                final double origValue = vertices[(i + 2) % 3];
-                                vertices[(i + 2) % 3] = aces[(i + 2) % 3].applyScaling(vertices[(i + 2) % 3]
-                                        + aces[i].getTickLength().doubleValue());
-                                gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                                vertices[(i + 2) % 3] = origValue;
-                                gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
-                                vertices[(i + 1) % 3] = aces[(i + 1) % 3].applyScaling(vertices[(i + 1) % 3]
-                                        + aces[i].getTickLength().doubleValue());
+                                vertices[i] = aces[i].applyScaling(aces[i].getMax().doubleValue());
                                 gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
                             }
                             gl.glEnd();
 
+                            glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
+                                    viewport, 0, axisEnd, 0);
+                        }
+
+                        gl.glLineWidth(0.5f);
+
+                        if (renderParams.axisShowTicks[i] || renderParams.axisShowLabels[i]) {
+                            // draw vertices and ticks
+                            Number[] ticks = aces[i].getTicks();
+                            String[] tickLabels = aces[i].getTickLabels();
+
+                            Rectangle2D lastDrawnTickLabelArea = null;
+
+                            textRend = getTextRenderer(renderParams.axisLabelFont[i]);
+                            boldTextRend = getBoldTextRenderer(renderParams.axisLabelFont[i]);
+
+                            // the cycle goes downward to make sure the last label is drawn always
+                            for (int l = ticks.length - 1; l > 0; l--) {
+                                vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
+                                vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
+                                vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
+                                vertices[i] = aces[i].applyScaling(ticks[l].doubleValue());
+                                if (renderParams.axisShowTicks[i]) {
+                                    gl.glBegin(GL.GL_LINES);
+                                    { // draw a tick
+                                        gl.glColor3f(0.4f, 0.4f, 0.4f);
+                                        gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
+                                        final double origValue = vertices[(i + 2) % 3];
+                                        vertices[(i + 2) % 3] = aces[(i + 2) % 3].applyScaling(vertices[(i + 2) % 3]
+                                                + aces[i].getTickLength().doubleValue());
+                                        gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
+                                        vertices[(i + 2) % 3] = origValue;
+                                        gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
+                                        vertices[(i + 1) % 3] = aces[(i + 1) % 3].applyScaling(vertices[(i + 1) % 3]
+                                                + aces[i].getTickLength().doubleValue());
+                                        gl.glVertex3d(vertices[0], vertices[1], vertices[2]);
+                                    }
+                                    gl.glEnd();
+                                }
+
+                                vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
+                                vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
+                                vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
+                                vertices[i] = aces[i].applyScaling(ticks[l].doubleValue());
+
+                                if (renderParams.axisShowLabels[i]) {
+                                    TextRenderer rend = textRend;
+                                    if (l == ticks.length - 1)
+                                        rend = boldTextRend;
+                                    rend.beginRendering(getWidth(), getHeight());
+                                    {
+                                        gl.glMatrixMode(GL.GL_MODELVIEW);
+                                        gl.glColor3f(0.3f, 0.3f, 0.3f);
+                                        if (l == ticks.length - 1)
+                                            gl.glColor3f(0f, 0f, 0f);
+                                        glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0,
+                                                projectionMatrix, 0, viewport, 0, point, 0);
+                                        textBounds = rend.getBounds(tickLabels[l]);
+                                        textBounds.setRect(point[0] - sqrtZoom * textBounds.getWidth(), point[1]
+                                                - sqrtZoom * textBounds.getHeight(), textBounds.getWidth(),
+                                                textBounds.getHeight());
+                                        // don't draw the label if it overlaps a previously drawn label
+                                        if (lastDrawnTickLabelArea == null
+                                                || !lastDrawnTickLabelArea.intersects(textBounds)) {
+                                            gl.glTranslated(textBounds.getX(), textBounds.getY(), 0);
+                                            // gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
+                                            lastDrawnTickLabelArea = textBounds;
+                                            rend.draw(tickLabels[l], 0, 0);
+                                        }
+                                    }
+                                    rend.endRendering();
+                                }
+                            }
+                        }
+
+                        { // draw axis label
+                            double labelAngle = 90 - Math.atan2(axisEnd[0] - axisStart[0], axisEnd[1] - axisStart[1])
+                                    / (2 * Math.PI) * 360;
+                            if (labelAngle > 90)
+                                labelAngle -= 180;
+
                             vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
                             vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
                             vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
-                            vertices[i] = aces[i].applyScaling(ticks[l].doubleValue());
+                            vertices[i] = aces[i].applyScaling(aces[i].getMin().doubleValue())
+                                    + (aces[i].applyScaling(aces[i].getMax().doubleValue()) - aces[i]
+                                            .applyScaling(aces[i].getMin().doubleValue())) / 2d;
 
-                            TextRenderer rend = textRend;
-                            if (l == ticks.length - 1)
-                                rend = boldTextRend;
-                            rend.beginRendering(getWidth(), getHeight());
+                            boldTextRend = getBoldTextRenderer(renderParams.axisTitleFont[i]);
+                            boldTextRend.beginRendering(getWidth(), getHeight());
                             {
                                 gl.glMatrixMode(GL.GL_MODELVIEW);
-                                gl.glColor3f(0.3f, 0.3f, 0.3f);
-                                if (l == ticks.length - 1)
-                                    gl.glColor3f(0f, 0f, 0f);
+                                gl.glLoadIdentity();
+                                final Color color = renderParams.axisTitleColor[i];
+                                gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
                                 glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix,
                                         0, viewport, 0, point, 0);
-                                textBounds = rend.getBounds(tickLabels[l]);
-                                textBounds.setRect(point[0] - sqrtZoom * textBounds.getWidth(), point[1] - sqrtZoom
-                                        * textBounds.getHeight(), textBounds.getWidth(), textBounds.getHeight());
-                                // don't draw the label if it overlaps a previously drawn label
-                                if (lastDrawnTickLabelArea == null || !lastDrawnTickLabelArea.intersects(textBounds)) {
-                                    gl.glTranslated(textBounds.getX(), textBounds.getY(), 0);
-                                    // gl.glScaled(sqrtZoom, sqrtZoom, sqrtZoom);
-                                    lastDrawnTickLabelArea = textBounds;
-                                    rend.draw(tickLabels[l], 0, 0);
-                                }
+                                textBounds = boldTextRend.getBounds(aces[i].getLabel());
+                                gl.glTranslated(point[0] - 5, point[1] - 5, 0.1);
+                                gl.glRotated(labelAngle, 0, 0, 1);
+                                gl.glTranslated(-textBounds.getWidth() / 2, -textBounds.getHeight() / 2, 0);
+                                boldTextRend.draw(aces[i].getLabel(), 0, 0);
                             }
-                            rend.endRendering();
+                            boldTextRend.endRendering();
                         }
-
-                        double labelAngle = 90 - Math.atan2(axisEnd[0] - axisStart[0], axisEnd[1] - axisStart[1])
-                                / (2 * Math.PI) * 360;
-                        if (labelAngle > 90)
-                            labelAngle -= 180;
-
-                        vertices[0] = aces[0].applyScaling(aces[0].getMin().doubleValue());
-                        vertices[1] = aces[1].applyScaling(aces[1].getMin().doubleValue());
-                        vertices[2] = aces[2].applyScaling(aces[2].getMin().doubleValue());
-                        vertices[i] = aces[i].applyScaling(aces[i].getMin().doubleValue())
-                                + (aces[i].applyScaling(aces[i].getMax().doubleValue()) - aces[i].applyScaling(aces[i]
-                                        .getMin().doubleValue())) / 2d;
-
-                        boldTextRend.beginRendering(getWidth(), getHeight());
-                        {
-                            gl.glMatrixMode(GL.GL_MODELVIEW);
-                            gl.glLoadIdentity();
-                            gl.glColor3f(0f, 0f, 0f);
-                            glu.gluProject(vertices[0], vertices[1], vertices[2], transform, 0, projectionMatrix, 0,
-                                    viewport, 0, point, 0);
-                            textBounds = boldTextRend.getBounds(aces[i].getLabel());
-                            gl.glTranslated(point[0] - 5, point[1] - 5, 0.1);
-                            gl.glRotated(labelAngle, 0, 0, 1);
-                            gl.glTranslated(-textBounds.getWidth() / 2, -textBounds.getHeight() / 2, 0);
-                            boldTextRend.draw(aces[i].getLabel(), 0, 0);
-                        }
-                        boldTextRend.endRendering();
                     }
                     if (aces.length == 4) {
+                        // draw the color (4th) axis
                         gl.glMatrixMode(GL.GL_PROJECTION);
                         gl.glPushMatrix();
                         gl.glLoadIdentity();
@@ -373,9 +415,11 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                             final double textLeft = -0.9;
                             final double labelTop = (getHeight() - 8) * yRatioFromPx - 1, labelMargin = 8 * yRatioFromPx;
 
+                            boldTextRend = getBoldTextRenderer(renderParams.axisTitleFont[3]);
                             boldTextRend.beginRendering(getWidth(), getHeight());
                             {
-                                gl.glColor3f(0f, 0f, 0f);
+                                final Color color = renderParams.axisTitleColor[3];
+                                gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
                                 textBounds = boldTextRend.getBounds(aces[3].getLabel());
                                 boldTextRend.draw(aces[3].getLabel(), (int) ((textLeft + 1) / xRatioFromPx),
                                         (int) ((labelTop + 1) / yRatioFromPx - textBounds.getHeight()));
@@ -385,14 +429,17 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                             final double width = 100 * xRatioFromPx, height = 15 * yRatioFromPx, top = labelTop
                                     - labelMargin - textBounds.getHeight() * yRatioFromPx;
 
-                            boldTextRend.beginRendering(getWidth(), getHeight());
-                            {
-                                gl.glColor3f(0f, 0f, 0f);
-                                textBounds = boldTextRend.getBounds(aces[3].getMin().toString());
-                                boldTextRend.draw(aces[3].getMin().toString(), (int) ((textLeft + 1) / xRatioFromPx),
-                                        (int) ((top + 1) / yRatioFromPx - textBounds.getHeight()));
+                            if (renderParams.axisShowLabels[3]) {
+                                boldTextRend.beginRendering(getWidth(), getHeight());
+                                {
+                                    gl.glColor3f(0f, 0f, 0f);
+                                    textBounds = boldTextRend.getBounds(aces[3].getMin().toString());
+                                    boldTextRend.draw(aces[3].getMin().toString(),
+                                            (int) ((textLeft + 1) / xRatioFromPx),
+                                            (int) ((top + 1) / yRatioFromPx - textBounds.getHeight()));
+                                }
+                                boldTextRend.endRendering();
                             }
-                            boldTextRend.endRendering();
 
                             final double left = textLeft + (textBounds.getWidth() + 8) * xRatioFromPx;
                             final int numParts = 20;
@@ -413,15 +460,17 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                             }
                             gl.glEnd();
 
-                            boldTextRend.beginRendering(getWidth(), getHeight());
-                            {
-                                gl.glColor3f(0f, 0f, 0f);
-                                textBounds = boldTextRend.getBounds(aces[3].getMax().toString());
-                                boldTextRend.draw(aces[3].getMax().toString(),
-                                        (int) ((left + width + 1) / xRatioFromPx + 8),
-                                        (int) ((top + 1) / yRatioFromPx - textBounds.getHeight()));
+                            if (renderParams.axisShowLabels[3]) {
+                                boldTextRend.beginRendering(getWidth(), getHeight());
+                                {
+                                    gl.glColor3f(0f, 0f, 0f);
+                                    textBounds = boldTextRend.getBounds(aces[3].getMax().toString());
+                                    boldTextRend.draw(aces[3].getMax().toString(), (int) ((left + width + 1)
+                                            / xRatioFromPx + 8),
+                                            (int) ((top + 1) / yRatioFromPx - textBounds.getHeight()));
+                                }
+                                boldTextRend.endRendering();
                             }
-                            boldTextRend.endRendering();
                         }
 
                         gl.glMatrixMode(GL.GL_PROJECTION);
@@ -574,6 +623,44 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
                 gl.glMatrixMode(GL.GL_MODELVIEW);
                 gl.glPopMatrix();
             }
+
+            /**
+             * Draw the chart title.
+             * 
+             * @param gl The {@link javax.media.opengl.GL} instance to use.
+             */
+            private void drawTitle(GL gl)
+            {
+                gl.glMatrixMode(GL.GL_PROJECTION);
+                gl.glPushMatrix();
+                gl.glLoadIdentity();
+                gl.glMatrixMode(GL.GL_MODELVIEW);
+                gl.glPushMatrix();
+                gl.glLoadIdentity();
+
+                {
+                    final double xRatioFromPx = 2d / getWidth();
+                    final int leftMarginPx = (int) ((-0.9 + 1) / xRatioFromPx);
+
+                    final TextRenderer textRend = new TextRenderer(renderParams.titleFont, false, true, null, true);
+
+                    Rectangle2D textBounds;
+                    textRend.beginRendering(getWidth(), getHeight());
+                    {
+                        final Color color = renderParams.titleColor;
+                        gl.glColor3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f);
+                        textBounds = textRend.getBounds(title);
+                        textRend.draw(title, (int) (leftMarginPx + (getWidth() - textBounds.getWidth()) / 2),
+                                (int) (getHeight() - textBounds.getHeight() - 10));
+                    }
+                    textRend.endRendering();
+                }
+
+                gl.glMatrixMode(GL.GL_PROJECTION);
+                gl.glPopMatrix();
+                gl.glMatrixMode(GL.GL_MODELVIEW);
+                gl.glPopMatrix();
+            }
         };
 
         GLCapabilities capabilities = new GLCapabilities();
@@ -682,6 +769,20 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
         setLayout(new GridBagLayout());
         final GridBagConstraints gbc = GridBagUtils.createConstraints("");
         GridBagUtils.addToPanel(this, canvas, gbc, "weightx=1,weighty=1,gridx=0,gridy=0,fill=BOTH");
+    }
+
+    /**
+     * @return The {@link RenderParams} object to be used by this class.
+     */
+    protected RenderParams createRenderParams()
+    {
+        return new RenderParams();
+    }
+
+    @Override
+    public RenderParams getRenderParams()
+    {
+        return renderParams;
     }
 
     // beacause canvas "eats" the mouse events

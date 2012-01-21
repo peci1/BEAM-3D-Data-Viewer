@@ -14,6 +14,11 @@ import java.io.File;
 public interface GraphicalDataViewer extends DataViewer, Printable
 {
     /**
+     * @return The rendering parameters. Change the values directly to affect rendering.
+     */
+    RenderParams getRenderParams();
+
+    /**
      * Save the viewer's displayed data to the given file.
      * <p>
      * This method is nonblocking, the caller can capture its finish using the given callback.
