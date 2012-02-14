@@ -557,6 +557,8 @@ public class JOGLDataViewer extends JPanel implements GraphicalDataViewer
              */
             private void drawGrid(GL gl, Grid grid)
             {
+                if (!renderParams.showGrid)
+                    return;
                 gl.glLineWidth(0.5f);
                 gl.glBegin(GL.GL_LINES);
                 gl.glColor3f(0.8f, 0.8f, 0.8f);

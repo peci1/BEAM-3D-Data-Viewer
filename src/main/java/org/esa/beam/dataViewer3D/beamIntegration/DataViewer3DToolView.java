@@ -186,6 +186,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
     private Parameter[]                 axisShowTicksParams  = new Parameter[4];
     private Parameter[]                 axisLabelFontParams  = new Parameter[4];
     private Parameter                   backgroundColorParam;
+    private Parameter                   showGridParam;
 
     private SingleRoiComputePanel       computePanel;
 
@@ -406,7 +407,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     "The label of the axis. Leave empty to use the default label.");
             paramGroup.addParameter(axisTitleTextParams[i]);
             chartPropertiesGroup.addParameter(axisTitleTextParams[i]);
-            // TODO add bindings to change the data viewer values appropriately
+
             axisTitleTextParams[i].addParamChangeListener(new ParamChangeListener() {
                 @Override
                 public void parameterValueChanged(ParamChangeEvent event)
@@ -499,6 +500,19 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
             public void parameterValueChanged(ParamChangeEvent event)
             {
                 dataViewer.getRenderParams().backgroundColor = (Color) event.getParameter().getValue();
+            }
+        });
+
+        showGridParam = new Parameter("showGrid", Boolean.TRUE);
+        showGridParam.getProperties().setLabel("Show grid?");
+        showGridParam.getProperties().setDescription("Show the grid?");
+        paramGroup.addParameter(showGridParam);
+        chartPropertiesGroup.addParameter(showGridParam);
+        showGridParam.addParamChangeListener(new ParamChangeListener() {
+            @Override
+            public void parameterValueChanged(ParamChangeEvent event)
+            {
+                dataViewer.getRenderParams().showGrid = (Boolean) event.getParameter().getValue();
             }
         });
 
@@ -2213,9 +2227,11 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
 
             final JPanel titlePanel = GridBagUtils.createPanel();
             final JTabbedPane plotPanel = new JTabbedPane();
+            final JPanel gridPanel = GridBagUtils.createPanel();
             final JPanel otherPanel = GridBagUtils.createPanel();
             tabs.add("Title", titlePanel);/* I18N */
             tabs.add("Plot", plotPanel);/* I18N */
+            tabs.add("Grid", gridPanel);/* I18N */
             tabs.add("Other", otherPanel);/* I18N */
 
             GridBagConstraints gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,weighty=0,anchor=NORTH");
@@ -2294,6 +2310,16 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                         "gridx=0,gridy=2,weightx=1,gridwidth=2");
             }
 
+            // GRID -> GENERAL
+            final JPanel gridGeneral = GridBagUtils.createPanel();
+            GridBagUtils.addToPanel(gridPanel, gridGeneral, gbc, "gridx=0,gridy=0,weighty=1");
+            gridGeneral.setBorder(BorderFactory.createTitledBorder("General"));/* I18N */
+
+            gbc = GridBagUtils.createConstraints("fill=HORIZONTAL,weightx=1,weighty=0,anchor=NORTHWEST,gridheight=1");
+
+            GridBagUtils.addToPanel(gridGeneral, showGridParam.getEditor().getComponent(), gbc, "gridx=0,gridy=0");
+
+            // OTHER -> GENERAL
             final JPanel otherGeneral = GridBagUtils.createPanel();
             GridBagUtils.addToPanel(otherPanel, otherGeneral, gbc, "gridx=0,gridy=0,weighty=1");
             otherGeneral.setBorder(BorderFactory.createTitledBorder("General"));/* I18N */

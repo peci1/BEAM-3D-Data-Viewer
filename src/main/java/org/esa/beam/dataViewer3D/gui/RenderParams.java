@@ -22,6 +22,5 @@ public class RenderParams
     public final boolean[] axisShowTicks   = new boolean[] { true, true, true, true };
     public final Font[]    axisLabelFont   = new Font[] { titleFont, titleFont, titleFont, titleFont };
     public Color           backgroundColor = Color.white;
-
-    // TODO hide grid
+    public boolean         showGrid        = true;
 }
