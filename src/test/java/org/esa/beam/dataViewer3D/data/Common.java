@@ -276,6 +276,30 @@ public class Common
                     }
                 };
             }
+
+            @Override
+            public Byte getDefinedMin()
+            {
+                return null;
+            }
+
+            @Override
+            public Byte getDefinedMax()
+            {
+                return null;
+            }
+
+            @Override
+            public boolean isCompatible(DataSource<?> other)
+            {
+                return other.size() == this.size();
+            }
+
+            @Override
+            public String getName()
+            {
+                return "Byte DS";
+            }
         };
     }
 
@@ -353,6 +377,30 @@ public class Common
                         return true;
                     }
                 };
+            }
+
+            @Override
+            public Integer getDefinedMin()
+            {
+                return null;
+            }
+
+            @Override
+            public Integer getDefinedMax()
+            {
+                return null;
+            }
+
+            @Override
+            public boolean isCompatible(DataSource<?> other)
+            {
+                return other.size() == this.size();
+            }
+
+            @Override
+            public String getName()
+            {
+                return "Integer DS";
             }
         };
     }
@@ -432,6 +480,30 @@ public class Common
                     }
                 };
             }
+
+            @Override
+            public Double getDefinedMin()
+            {
+                return null;
+            }
+
+            @Override
+            public Double getDefinedMax()
+            {
+                return null;
+            }
+
+            @Override
+            public boolean isCompatible(DataSource<?> other)
+            {
+                return other.size() == this.size();
+            }
+
+            @Override
+            public String getName()
+            {
+                return "Double DS";
+            }
         };
     }
 
@@ -509,6 +581,30 @@ public class Common
                         return true;
                     }
                 };
+            }
+
+            @Override
+            public Float getDefinedMin()
+            {
+                return null;
+            }
+
+            @Override
+            public Float getDefinedMax()
+            {
+                return null;
+            }
+
+            @Override
+            public boolean isCompatible(DataSource<?> other)
+            {
+                return other.size() == this.size();
+            }
+
+            @Override
+            public String getName()
+            {
+                return "Float DS";
             }
         };
     }
