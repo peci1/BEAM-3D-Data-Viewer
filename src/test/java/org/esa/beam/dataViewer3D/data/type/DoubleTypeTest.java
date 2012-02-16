@@ -3,9 +3,7 @@
  */
 package org.esa.beam.dataViewer3D.data.type;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -14,7 +12,7 @@ import org.junit.Test;
  * 
  * @author Martin Pecka
  */
-public class DoubleTypeTest
+public class DoubleTypeTest extends DecimalTypeTestCommon<Double>
 {
 
     /**
@@ -24,14 +22,9 @@ public class DoubleTypeTest
     @Test
     public void testDoubleType()
     {
-        assertNotNull(new DoubleType(0d, null));
-        assertNotNull(new DoubleType(1.5d, 10));
-        assertNotNull(new DoubleType(-1.5d, -10));
-        assertNotNull(new DoubleType(Double.MAX_VALUE, 10));
-        assertNotNull(new DoubleType(Double.MIN_VALUE, -10));
-        assertNotNull(new DoubleType(Double.NaN, 10));
-        assertNotNull(new DoubleType(Double.NEGATIVE_INFINITY, 0));
-        assertNotNull(new DoubleType(Double.POSITIVE_INFINITY, 1));
+        testConstructor(new Double[] { 0d, 1.5d, -1.5d, Double.MAX_VALUE, Double.MIN_VALUE, Double.NaN,
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY },
+                new Integer[] { null, 10, -10, 10, -10, 10, 0, 1 });
     }
 
     /**
@@ -40,23 +33,8 @@ public class DoubleTypeTest
     @Test
     public void testHashCode()
     {
-        assertEquals("hashCode() differs for equal values", new DoubleType(5d, 0).hashCode(),
-                new DoubleType(5d, 0).hashCode());
-        assertEquals("hashCode() differs for equal values", new DoubleType(0d, 2).hashCode(),
-                new DoubleType(0d, 2).hashCode());
-        assertEquals("hashCode() differs for equal values", new DoubleType(Double.MIN_VALUE, 10).hashCode(),
-                new DoubleType(Double.MIN_VALUE, 10).hashCode());
-        assertEquals("hashCode() differs for equal values", new DoubleType(1.5d, 0).hashCode(),
-                new DoubleType(1.7d, 0).hashCode());
-        assertEquals("hashCode() differs for equal values", new DoubleType(1.333d, 2).hashCode(), new DoubleType(
-                1.334d, 2).hashCode());
-        assertEquals("hashCode() differs for equal values", new DoubleType(101d, -1).hashCode(), new DoubleType(102d,
-                -1).hashCode());
-
-        assertNotSame("Equal hashcodes for nonequal values found.", new DoubleType(5d, 2).hashCode(), new DoubleType(
-                7d, 2).hashCode());
-        assertNotSame("Equal hashcodes for nonequal values found.", new DoubleType(Double.MIN_VALUE, 2).hashCode(),
-                new DoubleType(Double.MAX_VALUE, 2).hashCode());
+        testHashCode(false, new Double[] { 5d, 5d, 0d, 0d, Double.MIN_VALUE, Double.MIN_VALUE, 1.5d, 1.7d, 1.333d,
+                1.334d, 101d, 102d }, new Integer[] { 0, 0, 2, 2, 10, 10, 0, 0, 2, 2, -1, -1 });
     }
 
     /**
@@ -65,26 +43,11 @@ public class DoubleTypeTest
     @Test
     public void testEqualsObject()
     {
-        assertEquals("Equal objects claimed not equal.", new DoubleType((double) 0, 2), new DoubleType((double) 0, 2));
-        assertEquals("Equal objects claimed not equal.", new DoubleType(Double.MAX_VALUE, null), new DoubleType(
-                Double.MAX_VALUE, null));
-
-        assertEquals("Equal objects claimed not equal.", new DoubleType(1.5d, 0), new DoubleType(1.7d, 0));
-        assertEquals("Equal objects claimed not equal.", new DoubleType(1.333d, 2), new DoubleType(1.334d, 2));
-        assertEquals("Equal objects claimed not equal.", new DoubleType(101d, -1), new DoubleType(102d, -1));
-
-        assertNotSame("Unequal objects claimed equal.", new DoubleType((double) 0, 2), new DoubleType((double) 1, 2));
-        assertNotSame("Unequal objects claimed equal.", new DoubleType((double) 0, -2), new DoubleType((double) -1, -2));
-        assertNotSame("Unequal objects claimed equal.", new DoubleType(Double.MIN_VALUE, 0), new DoubleType(
-                Double.MAX_VALUE, 0));
-
-        assertNotSame("Unequal objects claimed equal.", new DoubleType(1.5d, 0), new DoubleType(1.4d, 0));
-        assertNotSame("Unequal objects claimed equal.", new DoubleType(1.336d, 2), new DoubleType(1.334d, 2));
-        assertNotSame("Unequal objects claimed equal.", new DoubleType(94d, -1), new DoubleType(102d, -1));
-
-        assertNotSame("Unequal objects claimed equal.", new DoubleType((double) 0, null), null);
-        assertNotSame("Unequal objects claimed equal.", new DoubleType((double) 0, 100), "asd");
-        assertNotSame("Unequal objects claimed equal.", new DoubleType((double) 0, 10000), (double) 0);
+        testEqualsObject(new Double[] { (double) 0, (double) 0, Double.MAX_VALUE, Double.MAX_VALUE, 1.5d, 1.7d, 1.333d,
+                1.334d, 101d, 102d }, new Integer[] { 2, 2, null, null, 0, 0, 2, 2, -1, -1, }, new Double[] {
+                (double) 0, (double) 1, (double) 0, (double) -1, Double.MIN_VALUE, Double.MAX_VALUE, 1.5d, 1.4d,
+                1.336d, 1.334d, 94d, 102d }, new Integer[] { 2, 2, -2, -2, 0, 0, 0, 0, 2, 2, -1, -1, }, new Object[] {
+                (double) 0, null, (double) 0, "asd", (double) 0, (double) 0 }, new Integer[] { null, 100, 10000 });
     }
 
     /**
@@ -93,13 +56,8 @@ public class DoubleTypeTest
     @Test
     public void testGetPrecision()
     {
-        assertEquals("getPrecision() returned bad value", (Integer) 2, new DoubleType(0d, 2).getPrecision());
-        assertEquals("getPrecision() returned bad value", (Integer) 0, new DoubleType(100d, 0).getPrecision());
-        assertEquals("getPrecision() returned bad value", (Integer) null,
-                new DoubleType(Double.MIN_VALUE, null).getPrecision());
-        assertEquals("getPrecision() returned bad value", (Integer) (-10),
-                new DoubleType(Double.MAX_VALUE, -10).getPrecision());
-        assertEquals("getPrecision() returned bad value", (Integer) null, new DoubleType(-10d, null).getPrecision());
+        testGetPrecision(new Double[] { 0d, 100d, Double.MIN_VALUE, Double.MAX_VALUE, -10d }, new Integer[] { 2, 0,
+                null, -10, null });
     }
 
     /**
@@ -108,13 +66,24 @@ public class DoubleTypeTest
     @Test
     public void testGetNumber()
     {
-        assertEquals("getNumber() returned bad value", (Double) 0d, new DoubleType(0d, 2).getNumber());
-        assertEquals("getNumber() returned bad value", (Double) 100d, new DoubleType(100d, 0).getNumber());
-        assertEquals("getNumber() returned bad value", (Double) Double.MIN_VALUE,
-                new DoubleType(Double.MIN_VALUE, null).getNumber());
-        assertEquals("getNumber() returned bad value", (Double) Double.MAX_VALUE,
-                new DoubleType(Double.MAX_VALUE, -10).getNumber());
-        assertEquals("getNumber() returned bad value", (Double) (-10d), new DoubleType(-10d, null).getNumber());
+        testGetNumber(new Double[] { 0d, 100d, Double.MIN_VALUE, Double.MAX_VALUE, -10d }, new Integer[] { 2, 0, null,
+                -10, null });
+    }
+
+    @Override
+    protected DecimalNumericType<Double> getInstance(Double value, Integer precision)
+    {
+        return new DoubleType(value, precision);
+    }
+
+    @Override
+    protected Double[] getRandomValues(int count)
+    {
+        Double[] result = new Double[count];
+        Random rand = new Random();
+        for (int i = 0; i < count; i++)
+            result[i] = rand.nextDouble();
+        return result;
     }
 
 }

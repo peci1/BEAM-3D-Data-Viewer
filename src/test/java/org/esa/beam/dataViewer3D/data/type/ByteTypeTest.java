@@ -3,10 +3,6 @@
  */
 package org.esa.beam.dataViewer3D.data.type;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-
 import java.util.Random;
 
 import org.junit.Test;
@@ -16,7 +12,7 @@ import org.junit.Test;
  * 
  * @author Martin Pecka
  */
-public class ByteTypeTest
+public class ByteTypeTest extends NumericTypeTestCommon<Byte>
 {
 
     /**
@@ -25,9 +21,7 @@ public class ByteTypeTest
     @Test
     public void testByteType()
     {
-        assertNotNull(new ByteType((byte) 0));
-        assertNotNull(new ByteType(Byte.MAX_VALUE));
-        assertNotNull(new ByteType(Byte.MIN_VALUE));
+        testConstructor((byte) 0, Byte.MAX_VALUE, Byte.MIN_VALUE);
     }
 
     /**
@@ -36,32 +30,7 @@ public class ByteTypeTest
     @Test
     public void testHashCode()
     {
-        assertEquals("hashCode() differs for equal values", new ByteType((byte) 5).hashCode(),
-                new ByteType((byte) 5).hashCode());
-        assertEquals("hashCode() differs for equal values", new ByteType((byte) 0).hashCode(),
-                new ByteType((byte) 0).hashCode());
-        assertEquals("hashCode() differs for equal values", new ByteType(Byte.MIN_VALUE).hashCode(), new ByteType(
-                Byte.MIN_VALUE).hashCode());
-
-        // byte is smaller than int, so we can demand that the hash values are different
-        assertNotSame("Equal hashcodes for nonequal values found.", new ByteType((byte) 5).hashCode(), new ByteType(
-                (byte) 7).hashCode());
-        assertNotSame("Equal hashcodes for nonequal values found.", new ByteType(Byte.MIN_VALUE).hashCode(),
-                new ByteType(Byte.MAX_VALUE).hashCode());
-
-        final int testSize = 255;
-
-        Random rand = new Random();
-        byte[] rndBytes1 = new byte[testSize];
-        byte[] rndBytes2 = new byte[testSize];
-        rand.nextBytes(rndBytes1);
-        rand.nextBytes(rndBytes2);
-
-        for (int i = 0; i < testSize; i++) {
-            if (rndBytes1[i] != rndBytes2[i])
-                assertNotSame("Equal hashcodes for nonequal values found.", new ByteType(rndBytes1[i]).hashCode(),
-                        new ByteType(rndBytes2[i]).hashCode());
-        }
+        testHashCode(true, (byte) 5, (byte) 0, Byte.MIN_VALUE);
     }
 
     /**
@@ -70,11 +39,7 @@ public class ByteTypeTest
     @Test
     public void testGetNumber()
     {
-        assertEquals("getNumber() returned bad value", (Byte) (byte) 0, new ByteType((byte) 0).getNumber());
-        assertEquals("getNumber() returned bad value", (Byte) (byte) 100, new ByteType((byte) 100).getNumber());
-        assertEquals("getNumber() returned bad value", (Byte) Byte.MIN_VALUE, new ByteType(Byte.MIN_VALUE).getNumber());
-        assertEquals("getNumber() returned bad value", (Byte) Byte.MAX_VALUE, new ByteType(Byte.MAX_VALUE).getNumber());
-        assertEquals("getNumber() returned bad value", (Byte) (byte) -10, new ByteType((byte) -10).getNumber());
+        testGetNumber((byte) 0, (byte) 100, Byte.MIN_VALUE, Byte.MAX_VALUE, (byte) -10);
     }
 
     /**
@@ -83,14 +48,26 @@ public class ByteTypeTest
     @Test
     public void testEqualsObject()
     {
-        assertEquals("Equal objects claimed not equal.", new ByteType((byte) 0), new ByteType((byte) 0));
-        assertEquals("Equal objects claimed not equal.", new ByteType(Byte.MAX_VALUE), new ByteType(Byte.MAX_VALUE));
-        assertNotSame("Unequal objects claimed equal.", new ByteType((byte) 0), new ByteType((byte) 1));
-        assertNotSame("Unequal objects claimed equal.", new ByteType((byte) 0), new ByteType((byte) -1));
-        assertNotSame("Unequal objects claimed equal.", new ByteType(Byte.MIN_VALUE), new ByteType(Byte.MAX_VALUE));
-        assertNotSame("Unequal objects claimed equal.", new ByteType((byte) 0), null);
-        assertNotSame("Unequal objects claimed equal.", new ByteType((byte) 0), "asd");
-        assertNotSame("Unequal objects claimed equal.", new ByteType((byte) 0), (byte) 0);
+        testEqualsObject(new Byte[] { (byte) 0, Byte.MAX_VALUE }, new Byte[] { (byte) 0, (byte) 1, (byte) 0, (byte) -1,
+                Byte.MIN_VALUE, Byte.MAX_VALUE }, new Object[] { (byte) 0, null, (byte) 0, "asd", (byte) 0, (byte) 0 });
+    }
+
+    @Override
+    protected NumericType<Byte> getInstance(Byte value, Integer precision)
+    {
+        return new ByteType(value);
+    }
+
+    @Override
+    protected Byte[] getRandomValues(int count)
+    {
+        Random rand = new Random();
+        byte[] rndBytes = new byte[count];
+        rand.nextBytes(rndBytes);
+        Byte[] result = new Byte[count];
+        for (int i = 0; i < count; i++)
+            result[i] = rndBytes[i];
+        return result;
     }
 
 }

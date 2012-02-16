@@ -3,9 +3,7 @@
  */
 package org.esa.beam.dataViewer3D.data.type;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -14,7 +12,7 @@ import org.junit.Test;
  * 
  * @author Martin Pecka
  */
-public class LongTypeTest
+public class LongTypeTest extends NumericTypeTestCommon<Long>
 {
 
     /**
@@ -23,9 +21,7 @@ public class LongTypeTest
     @Test
     public void testLongType()
     {
-        assertNotNull(new LongType((long) 0));
-        assertNotNull(new LongType(Long.MAX_VALUE));
-        assertNotNull(new LongType(Long.MIN_VALUE));
+        testConstructor(0L, Long.MAX_VALUE, Long.MIN_VALUE);
     }
 
     /**
@@ -34,14 +30,7 @@ public class LongTypeTest
     @Test
     public void testHashCode()
     {
-        assertEquals("hashCode() differs for equal values", new LongType((long) 5).hashCode(),
-                new LongType((long) 5).hashCode());
-        assertEquals("hashCode() differs for equal values", new LongType((long) 0).hashCode(),
-                new LongType((long) 0).hashCode());
-        assertEquals("hashCode() differs for equal values", new LongType(Long.MIN_VALUE).hashCode(), new LongType(
-                Long.MIN_VALUE).hashCode());
-
-        // long is larger than int, so we cannot demand that the hash values are different
+        testHashCode(false, 5L, 0L, Long.MIN_VALUE);
     }
 
     /**
@@ -50,11 +39,7 @@ public class LongTypeTest
     @Test
     public void testGetNumber()
     {
-        assertEquals("getNumber() returned bad value", (Long) (long) 0, new LongType((long) 0).getNumber());
-        assertEquals("getNumber() returned bad value", (Long) (long) 100, new LongType((long) 100).getNumber());
-        assertEquals("getNumber() returned bad value", (Long) Long.MIN_VALUE, new LongType(Long.MIN_VALUE).getNumber());
-        assertEquals("getNumber() returned bad value", (Long) Long.MAX_VALUE, new LongType(Long.MAX_VALUE).getNumber());
-        assertEquals("getNumber() returned bad value", (Long) (long) -10, new LongType((long) -10).getNumber());
+        testGetNumber(0L, 100L, Long.MIN_VALUE, Long.MAX_VALUE, -10L);
     }
 
     /**
@@ -63,14 +48,24 @@ public class LongTypeTest
     @Test
     public void testEqualsObject()
     {
-        assertEquals("Equal objects claimed not equal.", new LongType((long) 0), new LongType((long) 0));
-        assertEquals("Equal objects claimed not equal.", new LongType(Long.MAX_VALUE), new LongType(Long.MAX_VALUE));
-        assertNotSame("Unequal objects claimed equal.", new LongType((long) 0), new LongType((long) 1));
-        assertNotSame("Unequal objects claimed equal.", new LongType((long) 0), new LongType((long) -1));
-        assertNotSame("Unequal objects claimed equal.", new LongType(Long.MIN_VALUE), new LongType(Long.MAX_VALUE));
-        assertNotSame("Unequal objects claimed equal.", new LongType((long) 0), null);
-        assertNotSame("Unequal objects claimed equal.", new LongType((long) 0), "asd");
-        assertNotSame("Unequal objects claimed equal.", new LongType((long) 0), (long) 0);
+        testEqualsObject(new Long[] { 0L, Long.MAX_VALUE }, new Long[] { 0L, 1L, 0L, (long) -1, Long.MIN_VALUE,
+                Long.MAX_VALUE }, new Object[] { 0L, null, 0L, "asd", 0L, 0L });
+    }
+
+    @Override
+    protected NumericType<Long> getInstance(Long value, Integer precision)
+    {
+        return new LongType(value);
+    }
+
+    @Override
+    protected Long[] getRandomValues(int count)
+    {
+        Random rand = new Random();
+        Long[] result = new Long[count];
+        for (int i = 0; i < count; i++)
+            result[i] = rand.nextLong();
+        return result;
     }
 
 }

@@ -3,10 +3,6 @@
  */
 package org.esa.beam.dataViewer3D.data.type;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-
 import java.util.Random;
 
 import org.junit.Test;
@@ -16,7 +12,7 @@ import org.junit.Test;
  * 
  * @author Martin Pecka
  */
-public class ShortTypeTest
+public class ShortTypeTest extends NumericTypeTestCommon<Short>
 {
 
     /**
@@ -25,9 +21,7 @@ public class ShortTypeTest
     @Test
     public void testShortType()
     {
-        assertNotNull(new ShortType((short) 0));
-        assertNotNull(new ShortType(Short.MAX_VALUE));
-        assertNotNull(new ShortType(Short.MIN_VALUE));
+        testConstructor((short) 0, Short.MAX_VALUE, Short.MIN_VALUE);
     }
 
     /**
@@ -36,30 +30,7 @@ public class ShortTypeTest
     @Test
     public void testHashCode()
     {
-        assertEquals("hashCode() differs for equal values", new ShortType((short) 5).hashCode(), new ShortType(
-                (short) 5).hashCode());
-        assertEquals("hashCode() differs for equal values", new ShortType((short) 0).hashCode(), new ShortType(
-                (short) 0).hashCode());
-        assertEquals("hashCode() differs for equal values", new ShortType(Short.MIN_VALUE).hashCode(), new ShortType(
-                Short.MIN_VALUE).hashCode());
-
-        // short is smaller than int, so we can demand that the hash values are different
-        assertNotSame("Equal hashcodes for nonequal values found.", new ShortType((short) 5).hashCode(), new ShortType(
-                (short) 7).hashCode());
-        assertNotSame("Equal hashcodes for nonequal values found.", new ShortType(Short.MIN_VALUE).hashCode(),
-                new ShortType(Short.MAX_VALUE).hashCode());
-
-        final int testSize = 255;
-
-        Random rand = new Random();
-        short rnd1, rnd2;
-        for (int i = 0; i < testSize; i++) {
-            rnd1 = (short) ((Short.MAX_VALUE - Short.MIN_VALUE) * rand.nextDouble() + Short.MIN_VALUE);
-            rnd2 = (short) ((Short.MAX_VALUE - Short.MIN_VALUE) * rand.nextDouble() + Short.MIN_VALUE);
-            if (rnd1 != rnd2)
-                assertNotSame("Equal hashcodes for nonequal values found.", new ShortType(rnd1).hashCode(),
-                        new ShortType(rnd2).hashCode());
-        }
+        testHashCode(true, (short) 5, (short) 0, Short.MIN_VALUE);
     }
 
     /**
@@ -68,13 +39,7 @@ public class ShortTypeTest
     @Test
     public void testGetNumber()
     {
-        assertEquals("getNumber() returned bad value", (Short) (short) 0, new ShortType((short) 0).getNumber());
-        assertEquals("getNumber() returned bad value", (Short) (short) 100, new ShortType((short) 100).getNumber());
-        assertEquals("getNumber() returned bad value", (Short) Short.MIN_VALUE,
-                new ShortType(Short.MIN_VALUE).getNumber());
-        assertEquals("getNumber() returned bad value", (Short) Short.MAX_VALUE,
-                new ShortType(Short.MAX_VALUE).getNumber());
-        assertEquals("getNumber() returned bad value", (Short) (short) -10, new ShortType((short) -10).getNumber());
+        testGetNumber((short) 0, (short) 100, Short.MIN_VALUE, Short.MAX_VALUE, (short) -10);
     }
 
     /**
@@ -83,14 +48,25 @@ public class ShortTypeTest
     @Test
     public void testEqualsObject()
     {
-        assertEquals("Equal objects claimed not equal.", new ShortType((short) 0), new ShortType((short) 0));
-        assertEquals("Equal objects claimed not equal.", new ShortType(Short.MAX_VALUE), new ShortType(Short.MAX_VALUE));
-        assertNotSame("Unequal objects claimed equal.", new ShortType((short) 0), new ShortType((short) 1));
-        assertNotSame("Unequal objects claimed equal.", new ShortType((short) 0), new ShortType((short) -1));
-        assertNotSame("Unequal objects claimed equal.", new ShortType(Short.MIN_VALUE), new ShortType(Short.MAX_VALUE));
-        assertNotSame("Unequal objects claimed equal.", new ShortType((short) 0), null);
-        assertNotSame("Unequal objects claimed equal.", new ShortType((short) 0), "asd");
-        assertNotSame("Unequal objects claimed equal.", new ShortType((short) 0), (short) 0);
+        testEqualsObject(new Short[] { (short) 0, Short.MAX_VALUE }, new Short[] { (short) 0, (short) 1, (short) 0,
+                (short) -1, Short.MIN_VALUE, Short.MAX_VALUE }, new Object[] { (short) 0, null, (short) 0, "asd",
+                (short) 0, (short) 0 });
+    }
+
+    @Override
+    protected NumericType<Short> getInstance(Short value, Integer precision)
+    {
+        return new ShortType(value);
+    }
+
+    @Override
+    protected Short[] getRandomValues(int count)
+    {
+        Random rand = new Random();
+        Short[] result = new Short[count];
+        for (int i = 0; i < count; i++)
+            result[i] = (short) rand.nextInt();
+        return result;
     }
 
 }
