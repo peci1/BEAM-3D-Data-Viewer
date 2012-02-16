@@ -517,7 +517,6 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         });
 
         paramGroup.addParamChangeListener(new ParamChangeListener() {
-
             @Override
             public void parameterValueChanged(ParamChangeEvent event)
             {
@@ -971,6 +970,7 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
         updateUIState(W_VAR);
 
         getControl().updateUI();
+        dataViewer.update();
     }
 
     /**
@@ -1196,7 +1196,6 @@ public class DataViewer3DToolView extends AbstractToolView implements SingleRoiC
                     setNoDataCoordinatesSystem();
                 }
                 dataSetChanged = true;
-                dataViewer.update();
                 updateUI();
             }
         };
